@@ -1,0 +1,17 @@
+Package: lrcde
+Title: Linear Regression Cell Type-Specific Differential Expression Power
+    Analysis
+Version: 0.1.0.9000
+Authors@R: person("Edmund", "Glass", email = "Edmund.Glass@gmail.com", role = c("aut", "cre"))
+Description: Linear Regression Cell Type-Specific Differential Expression Power
+    Analysis. Feeding lrcde a samples by genomic sites matrix of heterogeneous
+    expression measures, cell proportions, and a group membership vector, then
+    cell type-specific expression is estimated using linear regression per group.
+    Differences are take between group-wise estiamates per cell type per genomic
+    site. Power is calculated for per cell type per gene for each difference
+    estimate based on standard errors of coefficient estiamtes.
+Depends:
+License: Free
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 5.0.1.9000
