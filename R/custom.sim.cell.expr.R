@@ -2,7 +2,7 @@
 #'
 #' Called from a user wrapper script (see example 'lrcde.wrapper.sims.R').
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}
-#' @references \url{https://github.com/ERGlass/ERGmisc}
+#' @references \url{https://github.com/ERGlass/lrcde.dev}
 #' @param num.cells Number of cell types to simulate.
 #' @param base.expr.vec Control group expression level to simulate at the cell type-specific level.
 #' @param diff.expr.vec Absolute difference between control group and cases group to simulate at the cell type-specific level.

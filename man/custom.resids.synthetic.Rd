@@ -27,7 +27,7 @@ custom.resids.synthetic(het.obs, cell.props, groups, n.perms=1000, file.ext="my.
 Edmund R Glass, \email{Edmund.Glass@gmail.com}
 }
 \references{
-\url{https://github.com/ERGlass/ERGmisc}
+\url{https://github.com/ERGlass/lrcde.dev}
 }
 \keyword{Deconvolution}
 \keyword{analysis}

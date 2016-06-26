@@ -6,7 +6,7 @@
 \usage{
 lrcde(het.sub, cell.props, groups, output.file = "LRCDE_power_analysis",
   FEEDBACK = TRUE, medCntr = FALSE, stdz = FALSE, nonNeg = TRUE,
-  GET.FOLDS = FALSE, method = "dual", direction = "two.sided")
+  method = "dual", direction = "two.sided")
 }
 \arguments{
 \item{het.sub}{Should be samples by genomic site (rows by columns).  The samples by genomic measures heterogeneous observations matrix.}
@@ -25,13 +25,9 @@ lrcde(het.sub, cell.props, groups, output.file = "LRCDE_power_analysis",
 
 \item{nonNeg}{Boolean indicating whether to force cell type-specific estimates to be non-negative (TRUE) or not (FALSE).}
 
-\item{GET.FOLDS}{Boolean idicating whether to take the absolute difference between group-wise cell type-specific estimate (FALSE) or to take ratio between cases and controls (for fold change estimate: TRUE).}
-
-\item{method}{This should be one of "single", "dual" (csSAM method), or "ridge".  Default is "dual".  Specifies which type of regression deconvolution to perform.}
+\item{method}{Only "dual" is implemented in this version. This should be one of "single", "dual" (csSAM method), or "ridge".  Default is "dual".  Specifies which type of regression deconvolution to perform.}
 
 \item{direction}{Should be one of "two.sided", "up", or "down".  Which direction to test for cell type-specific expression changes.}
-
-\item{n.perms}{Integer value indicating number of group label permutations to perform when simulating each site's parameters.}
 }
 \value{
 List containing data.frame (total.frame) of analysis results and a list of parameter values supplied to lrcde function (arg.used).
@@ -51,7 +47,7 @@ lrcde( het.sub, cell.props, groups, output.file="name.of.csv.file.to.create", me
 Edmund R Glass, \email{Edmund.Glass@gmail.com}, Mikhail G Dozmorov, \email{Mikhail.Dozmorov@vcuhealth.org}
 }
 \references{
-\url{https://github.com/ERGlass/ERGmisc}
+\url{https://github.com/ERGlass/lrcde.dev}
 }
 \keyword{Deconvolution}
 \keyword{analysis}

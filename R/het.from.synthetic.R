@@ -2,7 +2,7 @@
 #'
 #' Called from sim_driver_script.
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}
-#' @references \url{https://github.com/ERGlass/ERGmisc}
+#' @references \url{https://github.com/ERGlass/lrcde.dev}
 #' @param cell.props  Should be samples by cell types (rows by columns).  The relative cell proportions per sample.
 #' @param cell.expr Matrix of simulated cell type-specific expressions (returned from sim.cell.expr()).
 #' @param resids The simulated residuals returned from get.resids.synthetic().

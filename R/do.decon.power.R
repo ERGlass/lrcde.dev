@@ -2,7 +2,7 @@
 #'
 #' This function is called by the lrcde function.  Not meant to be called directly by user.
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}, Mikhail G Dozmorov, \email{Mikhail.Dozmorov@@vcuhealth.org}
-#' @references \url{https://github.com/ERGlass/ERGmisc}
+#' @references \url{https://github.com/ERGlass/lrcde.dev}
 #' @param decon.list  List output by 'do.dual.decon' (or 'do.single.decon') function.  Containst lm fit object with regression results per group.
 #' @return power.list  Results of power analysis.
 #' @keywords Deconvolution cell type-specific differential expression detection power analysis
@@ -37,7 +37,6 @@ do.decon.power <- function(  decon.list, groups  )
     se2.tail = se2 * qt( 0.950, n.case   - 1 , lower.tail=TRUE )
   }
 
-
   # Cell type specific expression estimates per group:
   deconv = decon.list[[3]]
   base.expr = deconv[[ 1 ]]$coefficients   # Cell-type specific expression estimates from group 1
@@ -47,9 +46,15 @@ do.decon.power <- function(  decon.list, groups  )
     base.expr[ base.expr < 0 ] = 0.000000001
     case.expr[ case.expr < 0 ] = 0.000000001
   }
-
+  
+  if(dim(diffs)[2] == 1){ # In case we're only looking at one site, make sure diff.ests is 2 dimensional
+    base.expr = as.data.frame( base.expr, ncol=1 )
+    case.expr = as.data.frame( case.expr, ncol=1 )
+    colnames(base.expr) = colnames(case.expr) = colnames(diffs); 
+  }
+  
   # case.dist =   ( base.expr + se1.tail ) - ( base.expr + abs( diffs ) )
-  case.dist =   ( se1.tail ) - ( abs( diffs ) )
+  case.dist =   as.matrix(( se1.tail ) - ( abs( diffs ) ))
   power     = pt( case.dist, n.case - 1 , lower.tail=FALSE )
 
   ###########################################################################

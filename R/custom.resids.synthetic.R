@@ -2,7 +2,7 @@
 #'
 #' Called from user lrcde wrapper script (see example 'lrcde.wrapper.sims.R').
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}
-#' @references \url{https://github.com/ERGlass/ERGmisc}
+#' @references \url{https://github.com/ERGlass/lrcde.dev}
 #' @param resids.gene.j The residuals for both study groups for the genomic site j of interest.
 #' @param groups  A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.
 #' @param num.genes.desires Number of genomic sites to simulate based on genomic site j.

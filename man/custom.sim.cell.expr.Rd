@@ -29,7 +29,7 @@ custom.sim.cell.expr( num.cells.2.simulate, base.expression.vector, difference.2
 Edmund R Glass, \email{Edmund.Glass@gmail.com}
 }
 \references{
-\url{https://github.com/ERGlass/ERGmisc}
+\url{https://github.com/ERGlass/lrcde.dev}
 }
 \keyword{Deconvolution}
 \keyword{analysis}

@@ -4,19 +4,18 @@
 \alias{do.dual.decon}
 \title{do.dual.decon}
 \usage{
-do.dual.decon(het, cell.props, groups, medCntr, stdz, nonNeg,
-  GET.FOLDS = FALSE)
+do.dual.decon(het.sub, cell.props, groups, medCntr, stdz, nonNeg)
 }
 \arguments{
 \item{cell.props}{Should be samples by cell types (rows by columns).  The relative cell proportions per sample.}
 
 \item{groups}{Vector of 1's and 2's indicating group membership (controls and cases).}
 
-\item{nonNeg}{Boolean indicating whether to force cell type-specific expression estiamtes to be non-negative.}
+\item{nonNeg}{Boolean indicating whet.subher to force cell type-specific expression estiamtes to be non-negative.}
 
-\item{GET.FOLDS}{Boolean idicating whether to take the absolute difference between group-wise cell type-specific estimate or to take ratio between cases and controls (for fold change estimate).}
+\item{het.sub.sub}{The samples by genomic measures het.suberogeneous observations matrix}
 
-\item{het.sub}{The samples by genomic measures heterogeneous observations matrix}
+\item{GET.FOLDS}{Boolean idicating whet.subher to take the absolute difference between group-wise cell type-specific estimate or to take ratio between cases and controls (for fold change estimate).}
 }
 \value{
 Returns a list containing group-wise difference estimates, regression residuals, lm objects per group, and standard errors of cell type-specific expression estimates.  Also returns a two item list containing results of Breusch-Pagan test.
@@ -26,17 +25,17 @@ Performs the core functionality of LRCDE.  This function does the actual linear 
 }
 \details{
 Here is where the actual group-wise linear regressions are performed.
-This function is designed to handle a single genomic site at a time; e.g.: a single vector containing heterogeneous observations for controls and cases.
+This function is designed to handle a single genomic site at a time; e.g.: a single vector containing het.suberogeneous observations for controls and cases.
 This is the core functionality of linear regression cell type-specific differential expression detection.
 }
 \examples{
-do.dual.decon( het.obs, cell.props, groups, medCntr, stdz, nonNeg, GET.FOLDS=FALSE )
+do.dual.decon( het.sub.obs, cell.props, groups, medCntr, stdz, nonNeg, GET.FOLDS=FALSE )
 }
 \author{
 Edmund R Glass, \email{Edmund.Glass@gmail.com}
 }
 \references{
-\url{https://github.com/ERGlass/ERGmisc}
+\url{https://github.com/ERGlass/lrcde.dev}
 }
 \keyword{Deconvolution}
 \keyword{analysis}

@@ -25,7 +25,7 @@ do.decon.power( decon.list )
 Edmund R Glass, \email{Edmund.Glass@gmail.com}, Mikhail G Dozmorov, \email{Mikhail.Dozmorov@vcuhealth.org}
 }
 \references{
-\url{https://github.com/ERGlass/ERGmisc}
+\url{https://github.com/ERGlass/lrcde.dev}
 }
 \keyword{Deconvolution}
 \keyword{analysis}

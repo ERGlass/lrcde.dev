@@ -2,7 +2,7 @@
 #'
 #' Utility function to keep from having to pass group-wise sample sizes between functions.
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}
-#' @references \url{https://github.com/ERGlass/ERGmisc}
+#' @references \url{https://github.com/ERGlass/lrcde.dev}
 #' @param groups  A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.
 #' @return n  A vector containing control and cases sample sizes.
 #' @keywords Deconvolution cell type-specific differential expression detection power analysis

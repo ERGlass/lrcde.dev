@@ -22,7 +22,7 @@ group.wise.sample.size( groups )
 Edmund R Glass, \email{Edmund.Glass@gmail.com}
 }
 \references{
-\url{https://github.com/ERGlass/ERGmisc}
+\url{https://github.com/ERGlass/lrcde.dev}
 }
 \keyword{Deconvolution}
 \keyword{analysis}

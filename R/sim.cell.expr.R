@@ -2,7 +2,7 @@
 #'
 #' Called from sim_driver_script.
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}
-#' @references \url{https://github.com/ERGlass/ERGmisc}
+#' @references \url{https://github.com/ERGlass/lrcde.dev}
 #' @param num.cells Number of cell types to simulate.
 #' @param num.genes Number of genomic sites to simulate.
 #' @param base.expr Control group expression level to simulate at the cell type-specific level.

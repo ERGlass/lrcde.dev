@@ -2,18 +2,16 @@
 #'
 #' Call this function to run entire functionality of LRCDE.
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}, Mikhail G Dozmorov, \email{Mikhail.Dozmorov@@vcuhealth.org}
-#' @references \url{https://github.com/ERGlass/ERGmisc}
+#' @references \url{https://github.com/ERGlass/lrcde.dev}
 #' @param het.sub  Should be samples by genomic site (rows by columns).  The samples by genomic measures heterogeneous observations matrix.
 #' @param cell.props  Should be samples by cell types (rows by columns).  The relative cell proportions per sample.
 #' @param groups  A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.
-#' @param n.perms Integer value indicating number of group label permutations to perform when simulating each site's parameters.
 #' @param output.file File or path and file to output.  If indicated output directory (if path indicated) does not exist, a warning is issued and program execution halts.  Default behavior is to write output to LRCDE_power.analysis.csv in the current working directory.
 #' @param FEEDBACK Boolean indicating whether to output progess indication to console.  Default is TRUE.
 #' @param medCntr Boolean indicating whether to mean center differential expression estimates.
 #' @param stdz Boolean indicatin whether to scale differential expression estimates with their pooled adjusted standard deviation
 #' @param nonNeg Boolean indicating whether to force cell type-specific estimates to be non-negative (TRUE) or not (FALSE).
-#' @param GET.FOLDS Boolean idicating whether to take the absolute difference between group-wise cell type-specific estimate (FALSE) or to take ratio between cases and controls (for fold change estimate: TRUE).
-#' @param method This should be one of "single", "dual" (csSAM method), or "ridge".  Default is "dual".  Specifies which type of regression deconvolution to perform.
+#' @param method Only "dual" is implemented in this version. This should be one of "single", "dual" (csSAM method), or "ridge".  Default is "dual".  Specifies which type of regression deconvolution to perform.
 #' @param direction Should be one of "two.sided", "up", or "down".  Which direction to test for cell type-specific expression changes.
 #' @return List containing data.frame (total.frame) of analysis results and a list of parameter values supplied to lrcde function (arg.used).
 #' @keywords Deconvolution cell type-specific differential expression detection power analysis
@@ -32,7 +30,6 @@ lrcde <- function(  het.sub
                   , medCntr   = FALSE
                   , stdz      = FALSE
                   , nonNeg    = TRUE
-                  , GET.FOLDS = FALSE
                   , method    = "dual"
                   , direction = "two.sided"
                   )
@@ -66,14 +63,13 @@ lrcde <- function(  het.sub
     # Do the actual deconvolution step:
 
     # Do regressions (one regression per genomic site):
-    if( method == "single" ) {
-      decon.list   = do.single.decon(  het.sub
-                                      , cell.props
-                                      , groups
-                                      , medCntr, stdz, nonNeg
-                                      , GET.FOLDS
-                                      )
-    } # single
+    # if( method == "single" ) {
+    #   decon.list   = do.single.decon(  het.sub
+    #                                   , cell.props
+    #                                   , groups
+    #                                   , medCntr, stdz, nonNeg
+    #                                   )
+    # } # single
 
     # Do group-wise regressions (two regressions per genomic site):
     if( method == "dual" ) {
@@ -81,19 +77,19 @@ lrcde <- function(  het.sub
                                     , cell.props
                                     , groups
                                     , medCntr, stdz, nonNeg
-                                    , GET.FOLDS
                                     )
     } # dual
 
-    # Do group-wise regressions (two regressions per genomic site):
-    if( method == "ridge" ) {
-      decon.list =   do.ridge.decon(  het.sub
-                                     , cell.props
-                                     , groups
-                                     , medCntr, stdz, nonNeg
-                                     , GET.FOLDS
-                                    )
-    } # ridge
+    # # NOT IMPEMENTED:
+    # # Do group-wise regressions (two regressions per genomic site):
+    # if( method == "ridge" ) {
+    #   decon.list =   do.ridge.decon(  het.sub
+    #                                  , cell.props
+    #                                  , groups
+    #                                  , medCntr, stdz, nonNeg
+    #                                 )
+    # } # ridge
+
     ###############################################################################
 
   # Returned by any of the above do.*.decon functions:
@@ -113,7 +109,7 @@ lrcde <- function(  het.sub
   # # Do Shapiro-Wilk test on heterogeneous obs
   # # ...and report p-value in final output:
   sw.obs   = apply( het.sub, 2, shapiro.test )
-  sw.obs.p = sw.obs$p.value
+  sw.obs.p = sw.obs[[1]]$p.value
   ###########################################################################
 
   # ###########################################################################
@@ -134,8 +130,8 @@ lrcde <- function(  het.sub
   # ###########################################################################
   # MSE of obs:
   resids = decon.list[[2]]
-  resids.control   = resids[ groups == 1, ]
-  resids.case      = resids[ groups == 2, ]
+  resids.control   = resids[ groups == 1, , drop=FALSE]
+  resids.case      = resids[ groups == 2, , drop=FALSE]
   resids.control.2 = resids.control ^ 2
   resids.case.2    = resids.case    ^ 2
   sse.control      = apply( resids.control.2 , 2, sum )
@@ -171,15 +167,24 @@ lrcde <- function(  het.sub
   crit.t   = as.data.frame(t( power.list[[3]] ))
   base.t   = as.data.frame(t( power.list[[4]] ))
   case.t   = as.data.frame(t( power.list[[5]] ))
-  do.not.t = as.data.frame(t( ! power.list[[6]] )) # Inverting boolean here to be intuitive: trust=TRUE means power > .5 likely.
+  # do.not.t = as.data.frame(t( ! power.list[[6]] )) # Inverting boolean here to be intuitive: trust=TRUE means power > .5 likely.
   tail.1   = as.data.frame(t( power.list[[8]] ))
 
+  # if(dim(het.sub)[2] > 1){
+  #   power.t = t(power.t)
+  #   diffs.t = t(diffs.t)
+  #   crit.t  = t(crit.t)
+  #   base.t  = t(base.t)
+  #   case.t  = t(case.t)
+  #   tail.1  = t(tail.1)
+  # }
+  
   power.t$site  = rownames( power.t  )
   diffs.t$site  = rownames( diffs.t  )
   crit.t$site   = rownames( crit.t   )
   base.t$site   = rownames( base.t   )
   case.t$site   = rownames( case.t   )
-  do.not.t$site = rownames( do.not.t )
+  # do.not.t$site = rownames( do.not.t )
   tail.1$site   = rownames( tail.1   )
 
   cell.names = colnames(cell.props)
@@ -210,9 +215,9 @@ lrcde <- function(  het.sub
     text2parse = paste0("case.tmp = subset(case.t, select=c(", cell.name ,", site ))")
     eval(parse(text=text2parse));
     colnames(case.tmp) = c("case", "site")
-    text2parse = paste0("do.not.tmp = subset(do.not.t, select=c(", cell.name ,", site ))")
-    eval(parse(text=text2parse));
-    colnames(do.not.tmp) = c("trust", "site")
+    # text2parse = paste0("do.not.tmp = subset(do.not.t, select=c(", cell.name ,", site ))")
+    # eval(parse(text=text2parse));
+    # colnames(do.not.tmp) = c("trust", "site")
 
     tmp.frame = left_join( base.tmp   , case.tmp          , by="site" )
     tmp.frame = left_join( tmp.frame  , diffs.tmp         , by="site" )
@@ -221,7 +226,7 @@ lrcde <- function(  het.sub
     tmp.frame = left_join( tmp.frame  , mse.control.frame , by="site" )
     tmp.frame = left_join( tmp.frame  , mse.case.frame    , by="site" )
     tmp.frame = left_join( tmp.frame  , power.tmp         , by="site" )
-    tmp.frame = left_join( tmp.frame  , do.not.tmp        , by="site" )
+    # tmp.frame = left_join( tmp.frame  , do.not.tmp        , by="site" )
     tmp.frame$cell    = cell.name
 
     cat("cell name: ", cell.name, "\n")
@@ -246,7 +251,6 @@ lrcde <- function(  het.sub
                     , medCntr
                     , stdz
                     , nonNeg
-                    , GET.FOLDS
                     , method
                     , direction
                     )

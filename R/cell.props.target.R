@@ -3,7 +3,7 @@
 #'
 #' Creates synthetic cell proportions which targets both a specific cell proportion standard deviation for cell 1 (the cell used for simulation purposes) and condition number over entire cell proportion matrix.
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}, Mikhail G Dozmorov, \email{Mikhail.Dozmorov@@vcuhealth.org}
-#' @references \url{https://github.com/ERGlass/ERGmisc}
+#' @references \url{https://github.com/ERGlass/lrcde.dev}
 #' @param n.samps Sample size for cell proportions matrix to create.
 #' @param target.sd Standard deviation to create across samples for cell of interest.
 #' @param target.cd Condition number for whole cell proportions matrix.

@@ -33,7 +33,7 @@ sim.cell.expr(num.cells.2.simulate, num.genes.2.simulate, base.expression, diffe
 Edmund R Glass, \email{Edmund.Glass@gmail.com}
 }
 \references{
-\url{https://github.com/ERGlass/ERGmisc}
+\url{https://github.com/ERGlass/lrcde.dev}
 }
 \keyword{Deconvolution}
 \keyword{analysis}
