@@ -4,7 +4,7 @@
 \alias{do.decon.power}
 \title{do.decon.power}
 \usage{
-do.decon.power(decon.list, groups)
+do.decon.power(decon.list, groups, direction, nonNeg)
 }
 \arguments{
 \item{decon.list}{List output by 'do.dual.decon' (or 'do.single.decon') function.  Containst lm fit object with regression results per group.}

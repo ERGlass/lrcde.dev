@@ -11,7 +11,7 @@
 #' @export
 #' @examples
 #' do.decon.power( decon.list )
-do.decon.power <- function(  decon.list, groups  )
+do.decon.power <- function(  decon.list, groups, direction, nonNeg  )
 {
 
   ###########################################################################
@@ -29,7 +29,7 @@ do.decon.power <- function(  decon.list, groups  )
   se2 = decon.list[[5]]
 
   # Use se to get tail of 95% CI: (These are used to compute 'diff.critical' below.)
-  if(alternative == "two.sided"){
+  if( direction == "two.sided"){
     se1.tail = se1 * qt( 0.975, n.control - 1 , lower.tail=TRUE )
     se2.tail = se2 * qt( 0.975, n.case    - 1 , lower.tail=TRUE )
   } else {
