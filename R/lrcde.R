@@ -21,6 +21,7 @@
 #' Default behavior is to write output to LRCDE_power.analysis.csv in the current working directory.
 #' @export
 #' @examples
+#' \dontrun{
 #' # Load lrcde library:
 #' library( "lrcde" )
 #'
@@ -73,8 +74,8 @@
 #'                            , FEEDBACK = TRUE, medCntr = FALSE, stdz = FALSE, nonNeg = TRUE
 #'                            , method = "dual", direction = "two.sided")
 #' 
-#' 
-#' 
+#' } 
+
 lrcde <- function(  het.sub
                   , cell.props
                   , groups
