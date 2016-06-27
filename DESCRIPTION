@@ -10,8 +10,9 @@ Description: Linear Regression Cell Type-Specific Differential Expression Power
     Differences are take between group-wise estiamates per cell type per genomic
     site. Power is calculated for per cell type per gene for each difference
     estimate based on standard errors of coefficient estiamtes.
-Depends: dplyr
+Depends: 
 License: Free
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 5.0.1.9000
+Imports: dplyr
