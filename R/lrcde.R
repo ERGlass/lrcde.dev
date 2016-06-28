@@ -27,12 +27,12 @@
 #'
 #' # User chosen working directory - Where your output .csv file will be found:
 #' setwd(getwd()); getwd()
-#' 
+#'
 #' # Load data to work with:
 #' # Select an ExpressionSet object from the CellMix package to work with:
 #' library(CellMix)
 #' library(GEOquery)
-#' 
+#'
 #' # Data sets in CellMix to select from:
 #' gedDataInfo()
 #' mix <- ExpressionMix("GSE19830")
@@ -45,10 +45,10 @@
 #' dim(cell.props)
 #' apply(cell.props, 2, sd)
 #' # Cell proportion standard deviation > 0.06 across samples should produce reasonable differential detection power.
-#' # Brain     Liver      Lung 
+#' # Brain     Liver      Lung
 #' # 0.2613150 0.2859059 0.2837341
 #' apply(cell.props, 1, sum)            # These sum perfectly to 1.  NOT suitable for single-step deconvolution.
-#' 
+#'
 #' # Create (artificially) two groups
 #' p.sub.1 = p.sub[ (p.sub$Brain + p.sub$Lung) >  ( p.sub$Liver )     ,]
 #' dim(p.sub.1)
@@ -65,16 +65,16 @@
 #' cell.props = rbind(cells.1, cells.2)
 #' groups = c(rep(1, dim(het.1)[1]), rep(2, dim(het.2)[1]) )
 #' table(groups)
-#' 
+#'
 #' # Now apply the lrcde function in order to deconvolve cell type-specific expression
 #' # and perform power analysis on differential expression detection:
-#' 
+#'
 #' power.analysis.df = lrcde( het2use, cell.props, groups
 #'                            , output.file = "LRCDE_power_analysis_results"
 #'                            , FEEDBACK = TRUE, medCntr = FALSE, stdz = FALSE, nonNeg = TRUE
 #'                            , method = "dual", direction = "two.sided")
-#' 
-#' } 
+#'
+#' }
 
 lrcde <- function(  het.sub
                   , cell.props
@@ -232,7 +232,7 @@ lrcde <- function(  het.sub
   #   case.t  = t(case.t)
   #   tail.1  = t(tail.1)
   # }
-  
+
   power.t$site  = rownames( power.t  )
   diffs.t$site  = rownames( diffs.t  )
   crit.t$site   = rownames( crit.t   )
@@ -273,14 +273,14 @@ lrcde <- function(  het.sub
     # eval(parse(text=text2parse));
     # colnames(do.not.tmp) = c("trust", "site")
 
-    tmp.frame = left_join( base.tmp   , case.tmp          , by="site" )
-    tmp.frame = left_join( tmp.frame  , diffs.tmp         , by="site" )
-    tmp.frame = left_join( tmp.frame  , tail.tmp          , by="site" )
-    tmp.frame = left_join( tmp.frame  , crit.tmp          , by="site" )
-    tmp.frame = left_join( tmp.frame  , mse.control.frame , by="site" )
-    tmp.frame = left_join( tmp.frame  , mse.case.frame    , by="site" )
-    tmp.frame = left_join( tmp.frame  , power.tmp         , by="site" )
-    # tmp.frame = left_join( tmp.frame  , do.not.tmp        , by="site" )
+    tmp.frame = dplyr::left_join( base.tmp   , case.tmp          , by="site" )
+    tmp.frame = dplyr::left_join( tmp.frame  , diffs.tmp         , by="site" )
+    tmp.frame = dplyr::left_join( tmp.frame  , tail.tmp          , by="site" )
+    tmp.frame = dplyr::left_join( tmp.frame  , crit.tmp          , by="site" )
+    tmp.frame = dplyr::left_join( tmp.frame  , mse.control.frame , by="site" )
+    tmp.frame = dplyr::left_join( tmp.frame  , mse.case.frame    , by="site" )
+    tmp.frame = dplyr::left_join( tmp.frame  , power.tmp         , by="site" )
+    # tmp.frame = dplyr::left_join( tmp.frame  , do.not.tmp        , by="site" )
     tmp.frame$cell    = cell.name
 
     cat("cell name: ", cell.name, "\n")
