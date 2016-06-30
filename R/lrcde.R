@@ -6,7 +6,7 @@
 #' @param het.sub  Should be samples by genomic site (rows by columns).  The samples by genomic measures heterogeneous observations matrix.
 #' @param cell.props  Should be samples by cell types (rows by columns).  The relative cell proportions per sample.
 #' @param groups  A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.
-#' @param output.file File or path and file to output.  If indicated output directory (if path indicated) does not exist, a warning is issued and program execution halts.  Default behavior is to write output to LRCDE_power.analysis.csv in the current working directory.
+#' @param output.file file name to output the results. Default: LRCDE_power.analysis.csv.
 #' @param FEEDBACK Boolean indicating whether to output progess indication to console.  Default is TRUE.
 #' @param medCntr Boolean indicating whether to mean center differential expression estimates.
 #' @param stdz Boolean indicatin whether to scale differential expression estimates with their pooled adjusted standard deviation
@@ -70,60 +70,30 @@
 #' # and perform power analysis on differential expression detection:
 #'
 #' power.analysis.df = lrcde( het2use, cell.props, groups
-#'                            , output.file = "LRCDE_power_analysis_results"
+#'                            , output.file = "LRCDE_power_analysis_results.csv"
 #'                            , FEEDBACK = TRUE, medCntr = FALSE, stdz = FALSE, nonNeg = TRUE
 #'                            , method = "dual", direction = "two.sided")
 #'
 #' }
 
-lrcde <- function(  het.sub
-                  , cell.props
-                  , groups
-                  , output.file="LRCDE_power_analysis"
-                  , FEEDBACK  = TRUE
-                  , medCntr   = FALSE
-                  , stdz      = FALSE
-                  , nonNeg    = TRUE
-                  , method    = "dual"
-                  , direction = "two.sided"
-                  )
-  {
+lrcde <- function(het.sub,
+                  cell.props,
+                  groups,
+                  output.file="LRCDE_power_analysis.csv",
+                  FEEDBACK  = TRUE,
+                  medCntr   = FALSE,
+                  stdz      = FALSE,
+                  nonNeg    = TRUE,
+                  method    = "dual",
+                  direction = "two.sided") {
 
   ###########################################################################
-  unique.groups = unique( groups )
-  n = group.wise.sample.size( groups )
-  n.control = n[1]
-  n.case     = n[2]
-  n.cells = dim(cell.props)[2]
+  unique.groups <- unique(groups)
+  n             <- group.wise.sample.size(groups)
+  n.control     <- n[1]
+  n.case        <- n[2]
+  n.cells       <- dim(cell.props)[2]
   ###########################################################################
-
-  ###############################################################################
-  # Initial checks and warnings:
-
-    # Check for existence of indicated output file and directory and break nicely if file exists or directory does not exist.
-  #   test.4.file = paste0( output.file, ".csv" )
-  #   if(file.exists(test.4.file)){ # Do not clobber an existing file.
-  #     cat("Warning: indicated output file: '", output.file, "' exists.  You may want to rename indicated output file.")
-  #   } else
-
-  {
-  # OK to write file:
-  # if( !dir.exists( dirname(output.file) )) { # dir.exists function not working in Windows 7
-  #   cat(" Output directory indicated: '", dirname(output.file), "' does not exist.  Please create desired output directory first, then re-run lrcde.\n")
-  # } else  { # output.dir exists... carry on:
-  ###############################################################################
-
-  ###############################################################################
-    # Do the actual deconvolution step:
-
-    # Do regressions (one regression per genomic site):
-    # if( method == "single" ) {
-    #   decon.list   = do.single.decon(  het.sub
-    #                                   , cell.props
-    #                                   , groups
-    #                                   , medCntr, stdz, nonNeg
-    #                                   )
-    # } # single
 
     # Do group-wise regressions (two regressions per genomic site):
     if( method == "dual" ) {
@@ -294,25 +264,24 @@ lrcde <- function(  het.sub
   #############################################################################
 
   #############################################################################
-  # Write total.frame to .CSV file:  Places content in current working directory.
-  file2output = paste0( output.file, ".csv"  )
-  write.csv( total.frame, file=file2output , row.names = F )
+  # Write total.frame to .CSV file
+  unlink(output.file) # Delete, if file exists
+  write.csv(total.frame, file = output.file, row.names = FALSE)
   #############################################################################
 
   #############################################################################
   # Package the return list object:
-  args.used = list(  output.file
-                    , medCntr
-                    , stdz
-                    , nonNeg
-                    , method
-                    , direction
-                    )
+  args.used = list(output.file,
+                   medCntr,
+                   stdz,
+                   nonNeg,
+                   method,
+                   direction)
 
   return.list = list( total.frame, args.used )
   return( return.list )
   #############################################################################
   # } # If output.dir ! exists
 
-  } # output file exists
+#  } # output file exists
 } # End LRCDE
