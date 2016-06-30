@@ -22,70 +22,61 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' # Load lrcde library:
-#' library( "lrcde" )
-#'
-#' # User chosen working directory - Where your output .csv file will be found:
-#' setwd(getwd()); getwd()
-#'
-#' # Load data to work with:
-#' # Select an ExpressionSet object from the CellMix package to work with:
+#' library("lrcde")
 #' library(CellMix)
 #' library(GEOquery)
-#'
-#' # Data sets in CellMix to select from:
-#' gedDataInfo()
-#' mix <- ExpressionMix("GSE19830")
-#' p.sub = subset(pData(mix), select=c( Liver, Brain, Lung,  characteristics_ch1))
-#' head( p.sub )
-#' unique( p.sub$characteristics_ch1 )
-#' het <- t(exprs(mix))            # Heterogeneous expression matrix
-#' cell.props <- t(coef(mix))      # cell proportions matrix
-#' dim(het)
-#' dim(cell.props)
-#' apply(cell.props, 2, sd)
-#' # Cell proportion standard deviation > 0.06 across samples should produce reasonable differential detection power.
-#' # Brain     Liver      Lung
-#' # 0.2613150 0.2859059 0.2837341
-#' apply(cell.props, 1, sum)            # These sum perfectly to 1.  NOT suitable for single-step deconvolution.
-#'
-#' # Create (artificially) two groups
-#' p.sub.1 = p.sub[ (p.sub$Brain + p.sub$Lung) >  ( p.sub$Liver )     ,]
-#' dim(p.sub.1)
-#' g.1.names = rownames(p.sub.1)
-#' het.1 = het[ rownames(het) %in% g.1.names, ]
-#' dim(het.1)
-#' het.2 = het[ !(rownames(het) %in% g.1.names), ]
-#' dim(het.2)
-#' cells.1 = cell.props[ rownames(cell.props)%in%g.1.names,  ]
-#' cells.2 = cell.props[ !(rownames(cell.props)%in%g.1.names),  ]
-#' all.equal(rownames(het.1), rownames(cells.1))
-#' all.equal(rownames(het.2), rownames(cells.2))
-#' het2use = rbind(het.1, het.2)
-#' cell.props = rbind(cells.1, cells.2)
-#' groups = c(rep(1, dim(het.1)[1]), rep(2, dim(het.2)[1]) )
-#' table(groups)
-#'
-#' # Now apply the lrcde function in order to deconvolve cell type-specific expression
-#' # and perform power analysis on differential expression detection:
-#'
-#' power.analysis.df = lrcde( het2use, cell.props, groups
-#'                            , output.file = "LRCDE_power_analysis_results.csv"
-#'                            , FEEDBACK = TRUE, medCntr = FALSE, stdz = FALSE, nonNeg = TRUE
-#'                            , method = "dual", direction = "two.sided")
-#'
+#' 
+#' gedDataInfo() # Data sets in CellMix to select from
+#' mix <- ExpressionMix("GSE19830") # Example dataset with gene expression form mixture of tissues
+#' p.sub <- subset(pData(mix), select = c(Liver, Brain, Lung, characteristics_ch1))
+#' 
+#' het <- t(exprs(mix))  # Heterogeneous expression matrix
+#' cell.props <- t(coef(mix)) # Cell proportions matrix
+#' 
+#' apply(cell.props, 2, sd) # SD of cell proportions should not be 0
+#' # Cell proportion standard deviation > 0.06 across samples should
+#' # produce reasonable differential detection power.  
+#' apply(cell.props, 1, sum)  # These sum perfectly to 1.
+#' 
+#' # Create (artificially) two groups, Brain and Lung vs. Liver
+#' p.sub.1 <- p.sub[(p.sub$Brain + p.sub$Lung) > (p.sub$Liver), ]
+#' # Heterogeneous matrixes for each group
+#' het.1 <- het[rownames(het) %in% rownames(p.sub.1), ]
+#' het.2 <- het[!(rownames(het) %in% rownames(p.sub.1)), ]
+#' het2use <- rbind(het.1, het.2) # Combined matrix
+#' # Cell proportions for each group
+#' cells.1 <- cell.props[rownames(cell.props) %in% rownames(p.sub.1), ]
+#' cells.2 <- cell.props[!(rownames(cell.props) %in% rownames(p.sub.1)), ]
+#' cell.props <- rbind(cells.1, cells.2) # Combined cell proportions
+#' # Group vector
+#' groups <- c(rep(1, dim(het.1)[1]), rep(2, dim(het.2)[1]))
+#' 
+#' # Now apply the lrcde function in order to deconvolve cell
+#' # type-specific expression and perform power analysis on differential
+#' # expression detection:
+#' 
+#' power.analysis.df <- lrcde(het2use, 
+#'                            cell.props, 
+#'                            groups, 
+#'                            output.file = "LRCDE_power_analysis_results.csv", 
+#'                            FEEDBACK = TRUE, 
+#'                            medCntr = FALSE, 
+#'                            stdz = FALSE, 
+#'                            nonNeg = TRUE, 
+#'                            method = "dual", 
+#'                            direction = "two.sided")
 #' }
 
 lrcde <- function(het.sub,
                   cell.props,
                   groups,
-                  output.file="LRCDE_power_analysis.csv",
-                  FEEDBACK  = TRUE,
-                  medCntr   = FALSE,
-                  stdz      = FALSE,
-                  nonNeg    = TRUE,
-                  method    = "dual",
-                  direction = "two.sided") {
+                  output.file = "LRCDE_power_analysis.csv",
+                  FEEDBACK    = TRUE,
+                  medCntr     = FALSE,
+                  stdz        = FALSE,
+                  nonNeg      = TRUE,
+                  method      = "dual",
+                  direction   = "two.sided") {
 
   ###########################################################################
   unique.groups <- unique(groups)
@@ -93,40 +84,36 @@ lrcde <- function(het.sub,
   n.control     <- n[1]
   n.case        <- n[2]
   n.cells       <- dim(cell.props)[2]
-  ###########################################################################
+  
+   # Do group-wise regressions (two regressions per genomic site):
+  if (method == "dual") {
+    decon.list <- do.dual.decon(het.sub, cell.props, groups, medCntr, stdz, nonNeg)
+  }
+  
+  # # NOT IMPEMENTED:
+  # # Do group-wise regressions (two regressions per genomic site):
+  # if( method == "ridge" ) {
+  #   decon.list =   do.ridge.decon(  het.sub
+  #                                  , cell.props
+  #                                  , groups
+  #                                  , medCntr, stdz, nonNeg
+  #                                 )
+  # } # ridge
 
-    # Do group-wise regressions (two regressions per genomic site):
-    if( method == "dual" ) {
-      decon.list   = do.dual.decon(   het.sub
-                                    , cell.props
-                                    , groups
-                                    , medCntr, stdz, nonNeg
-                                    )
-    } # dual
-
-    # # NOT IMPEMENTED:
-    # # Do group-wise regressions (two regressions per genomic site):
-    # if( method == "ridge" ) {
-    #   decon.list =   do.ridge.decon(  het.sub
-    #                                  , cell.props
-    #                                  , groups
-    #                                  , medCntr, stdz, nonNeg
-    #                                 )
-    # } # ridge
-
-    ###############################################################################
+  ###############################################################################
 
   # Returned by any of the above do.*.decon functions:
   # decon.list =  list( fold.diff.ests, resids, deconv, se1, se2  ) )
 
   ###############################################################################
   # Cell proportions (cell.props) statistics:
-  cell.props.control = cell.props[ groups == 1, ]
-  cell.props.case    = cell.props[ groups == 2, ]
-  cell.SDs = apply( cell.props, 2, sd )
-  kappa.control = kappa( t( cell.props.control ) %*% cell.props.control, exact=TRUE )
-  kappa.case    = kappa( t( cell.props.case    ) %*% cell.props.case   , exact=TRUE )
-  kappa.all     = kappa( t( cell.props    ) %*% cell.props   , exact=TRUE )
+  cell.props.control  <- cell.props[groups == 1, ]
+  cell.props.case     <- cell.props[groups == 2, ]
+  cell.SDs            <- apply(cell.props, 2, sd)
+  # Condition numbers for the cell proportion matrixes
+  kappa.control       <- kappa(t(cell.props.control) %*% cell.props.control, exact = TRUE)
+  kappa.case          <- kappa(t(cell.props.case) %*% cell.props.case, exact = TRUE)
+  kappa.all           <- kappa(t(cell.props) %*% cell.props, exact = TRUE)
   ###############################################################################
 
   # ###########################################################################
