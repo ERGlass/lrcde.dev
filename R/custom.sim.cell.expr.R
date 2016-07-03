@@ -27,7 +27,10 @@ custom.sim.cell.expr <- function(  num.cells=5
   # Apply differential expression to cell.p in cases:
   diff.reps = length( base.expr.vec)
   diff.rep.vec = rep( diff.2.model.vec, each = diff.reps, times = len.mse.vec )
-  cells.cases[ cell.p ,  ] =  cells.control[ cell.p ,  ] + diff.rep.vec
+  
+  for(p in cell.p) {# print(p)
+    cells.cases[ p ,  ] =  cells.control[ p ,  ] + diff.rep.vec
+  }
 
   # combine controls and cases:
   cell.expr = rbind( cells.control, cells.cases )
