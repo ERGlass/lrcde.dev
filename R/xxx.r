@@ -67,7 +67,7 @@
 #' 
 #' power.analysis.df = lrcde( het2use, cell.props, groups
 #'                            , output.file = "LRCDE_power_analysis_results"
-#'                            , FEEDBACK = TRUE, medCntr = FALSE, stdz = FALSE, nonNeg = TRUE
+#'                            , VERBOSE = TRUE, medCntr = FALSE, stdz = FALSE, nonNeg = TRUE
 #'                            , method = "dual", direction = "two.sided")
 #' 
 #' 

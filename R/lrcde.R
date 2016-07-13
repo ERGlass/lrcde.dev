@@ -7,11 +7,11 @@
 #' @param cell.props  Should be samples by cell types (rows by columns).  The relative cell proportions per sample.
 #' @param groups  A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.
 #' @param output.file file name to output the results. Default: LRCDE_power.analysis.csv.
-#' @param FEEDBACK Boolean indicating whether to output progess indication to console.  Default is TRUE.
+#' @param VERBOSE Boolean indicating whether to output progess indication to console.  Default is TRUE.
 #' @param medCntr Boolean indicating whether to mean center differential expression estimates.
 #' @param stdz Boolean indicatin whether to scale differential expression estimates with their pooled adjusted standard deviation
 #' @param nonNeg Boolean indicating whether to force cell type-specific estimates to be non-negative (TRUE) or not (FALSE).
-#' @param method Only "dual" is implemented in this version. This should be one of "single", "dual" (csSAM method), or "ridge".  Default is "dual".  Specifies which type of regression deconvolution to perform.
+#' @param method Only "dual" is implemented in this version. This should be one of "dual" (csSAM method), or "ridge".  Default is "dual".  Specifies which type of regression deconvolution to perform.
 #' @param direction Should be one of "two.sided", "up", or "down".  Which direction to test for cell type-specific expression changes.
 #' @return List containing data.frame (total.frame) of analysis results and a list of parameter values supplied to lrcde function (arg.used).
 #' @keywords Deconvolution cell type-specific differential expression detection power analysis
@@ -59,7 +59,7 @@
 #'                            cell.props, 
 #'                            groups, 
 #'                            output.file = "LRCDE_power_analysis_results.csv", 
-#'                            FEEDBACK = TRUE, 
+#'                            VERBOSE = TRUE, 
 #'                            medCntr = FALSE, 
 #'                            stdz = FALSE, 
 #'                            nonNeg = TRUE, 
@@ -71,7 +71,7 @@ lrcde <- function(het.sub,
                   cell.props,
                   groups,
                   output.file = "LRCDE_power_analysis.csv",
-                  FEEDBACK    = TRUE,
+                  VERBOSE     = TRUE,
                   medCntr     = FALSE,
                   stdz        = FALSE,
                   nonNeg      = TRUE,
