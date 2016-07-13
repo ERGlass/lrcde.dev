@@ -18,7 +18,7 @@ This vignette explores what happens when we feed completely random data to LRCDE
 First: user must start by declaring the working directory where a .CSV output file will be written.
 
 Second: A few parameters need to be defined before creating completely random data.
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
 library(lrcde) # Load the lrcde package
 
 # Custom parameters to model:
@@ -31,7 +31,7 @@ library(lrcde) # Load the lrcde package
 NOTE: Since we are creating a comletely random heterogeneous observations matrix, there is no need to model differential expression at the cell specific level, so we skip simulating cell level expression all-together.
 
 Once paramters have been declared, simulate data:
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
 ###############################################################################
 # Simulate data:
     
@@ -67,7 +67,7 @@ Using the random data that you just simulated, you now call the lrcde function. 
 The following three parameter will automatically default to the following values if undeclared in the call to lrcde.
 The values shown below are the recommended settings.
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
     ###############################################################################
     # Use these for LRCDE since power calculation is meaningless if
     #      differences are transformed but standard errors are not:
@@ -81,7 +81,7 @@ It is good to specically declare the name of your output file (leave the .csv ex
 
 The 'alternative' can be one of 'two.sided', 'greater', or 'less'.  Default is 'two.sided'.
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
     method2use="dual" # Which type of deconvolution to run (dual is only thing implemented)
 
     lrcde.output.file   = paste0( "lrcde_sim_example.csv"  )
@@ -99,7 +99,7 @@ The 'alternative' can be one of 'two.sided', 'greater', or 'less'.  Default is '
 ```
 
 Now observe the percentage of times that we see power greater than 0.8 for a detected difference at the cell type-specific level:
-```{r}
+```{r, eval=FALSE, results="hide"}
 
 auc.frame = return.list[[1]]
 # auc.frame
@@ -132,7 +132,7 @@ If you re-run the random generation of the heterogeneous matrix, the proportion 
 
 These random heterogeneous observations and random cell proportions can also be analyzed using csSAM:
 
-```{r}
+```{r, eval=FALSE, results="hide"}
 # Run canned csSAM to get FDR for random data:
 library("csSAM")
 G = het.obs
@@ -177,7 +177,7 @@ rownames(sigGene) = colnames(cc)
 
 Now look at the number of FDR rates below some threshold.
 It appears that the csSAM package does not produce any appreciable number of low FDR rates using the totally random heterogeneous data.
-```{r}
+```{r, eval=FALSE, results="hide"}
 getwd()
 dim(sigGene)
 
@@ -191,11 +191,5 @@ min(sigGene); max(sigGene)
 # [1] 0.9963316
 # [1] 1
 ```
-
-
-
-
-
-
 
 
