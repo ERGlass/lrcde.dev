@@ -3,10 +3,10 @@
 #' Called from sim_driver_script.
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}
 #' @references \url{https://github.com/ERGlass/ERGmisc}
-#' @param het.sub  Should be samples by genomic site (rows by columns).  The samples by genomic measures heterogeneous observations matrix.
+#' @param het  Should be samples by genomic site (rows by columns).  The samples by genomic measures heterogeneous observations matrix.
 #' @param cell.props  Should be samples by cell types (rows by columns).  The relative cell proportions per sample.
 #' @param groups  A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.
-#' @param n.perms Integer value indicating number of group label permutations to perform when simulating each site's parameters.
+#' @param nperms Integer value indicating number of group label permutations to perform when simulating each site's parameters.
 #' @param medCntr Boolean indicating whether to median center differential expression estimates.
 #' @param stdz Boolean indicating whether to 'standardize' differential expression estimates.
 #' @param nonNeg Boolean indicating whether to force cell type-specific expression estiamtes to be non-negative.
@@ -14,7 +14,7 @@
 #' @keywords Deconvolution cell type-specific differential expression detection power analysis
 #' @export
 #' @examples
-#' do.permutations( het.obs, cell.props, groups, n.perms=1000  )
+#' do.permutations( het.obs, cell.props, groups, n.perms=1000,  medCntr, stdz, nonNeg )
 do.permutations <- function ( het, cell.props, groups, nperms=100, medCntr, stdz, nonNeg  ) 
 {
   numgene = ncol( het )
