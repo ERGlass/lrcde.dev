@@ -39,7 +39,7 @@ Decalare the total "genes" to model: 'n.genes'.  The first half of these genes w
   n.perms = 100
 ```  
   
-Declare the total number of repeated iterations of the same simualation with same cell proportion parameters.
+Declare the total number of repeated iterations of the same simulation with same cell proportion parameters.
 This allows for the random number generation seed to "float" or change between iterations.
 In this way, a cell proportions matrix with the same standard deviation (SD) on the target cell and the same condition number (kappa) on the cell proportions per group is created for each iteration, yet the actual cell proportions numbers are slightly different (perturbed) between iterations.
 It is this small change in cell proportion numbers which results in fluctuations of realized AUROC between iterations.  This type of variability is worse when the cell proprtions matrix is "ill-conditioned" (has a very high condtion number: above 1000.).
