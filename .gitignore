@@ -6,3 +6,5 @@
 *.Rproj
 *.csv
 
+.Rproj.user
+inst/doc
