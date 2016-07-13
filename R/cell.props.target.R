@@ -4,6 +4,7 @@
 #' Creates synthetic cell proportions which targets both a specific cell proportion standard deviation for cell 1 (the cell used for simulation purposes) and condition number over entire cell proportion matrix.
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}, Mikhail G Dozmorov, \email{Mikhail.Dozmorov@@vcuhealth.org}
 #' @references \url{https://github.com/ERGlass/lrcde.dev}
+#' @param n.cells Total number of cell types to simulate.
 #' @param n.samps Sample size for cell proportions matrix to create.
 #' @param target.sd Standard deviation to create across samples for cell of interest.
 #' @param target.cd Condition number for whole cell proportions matrix.
@@ -13,7 +14,7 @@
 #' NOTE: DO not attempt to specify a condition number less than 15.  Function will crash.
 #' @export
 #' @examples
-#' cell.props.target(  n.samps, target.sd, target.cd )
+#' cell.props.target( n.cells,  n.samps, target.sd, target.cd )
 #' 
 cell.props.target <- function( n.cells, n.samps, target.sd, target.cd  ) {
   #######################################################################
@@ -21,9 +22,10 @@ cell.props.target <- function( n.cells, n.samps, target.sd, target.cd  ) {
   start.prop    = 0.01
   tol = 0.001
   end.prop = 0.001
+  tot.len = n.samps
   #########################    
   while(TRUE){
-    cell.1 = seq( start.prop, end.prop, length.out=n.samps )
+    cell.1 = seq( start.prop, end.prop, length.out = tot.len )
     sd.1 = sd(cell.1)
     diff = target.sd - sd.1
     #     cat("diff: ", diff, ", tol: ", tol)

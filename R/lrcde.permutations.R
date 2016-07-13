@@ -6,13 +6,14 @@
 #' @param het.sub  Should be samples by genomic site (rows by columns).  The samples by genomic measures heterogeneous observations matrix.
 #' @param cell.props  Should be samples by cell types (rows by columns).  The relative cell proportions per sample.
 #' @param groups  A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.
-#' @param output.file file name to output the results. Default: LRCDE_power.analysis.csv.
-#' @param VERBOSE Boolean indicating whether to output progess indication to console.  Default is TRUE.
 #' @param medCntr Boolean indicating whether to mean center differential expression estimates.
 #' @param stdz Boolean indicatin whether to scale differential expression estimates with their pooled adjusted standard deviation
 #' @param nonNeg Boolean indicating whether to force cell type-specific estimates to be non-negative (TRUE) or not (FALSE).
 #' @param method Only "dual" is implemented in this version. This should be one of "dual" (csSAM method), or "ridge".  Default is "dual".  Specifies which type of regression deconvolution to perform.
 #' @param direction Should be one of "two.sided", "up", or "down".  Which direction to test for cell type-specific expression changes.
+#' @param n.perms Number of permutations of group labels to perform
+#' @param cell.p The simulation differentiated target cell.
+#' @param truth The truth indicator vector of which simulated "genes" in the target cell are differentiated between cases and controls.
 #' @return List containing data.frame (total.frame) of analysis results and a list of parameter values supplied to lrcde function (arg.used).
 #' @export
 
@@ -65,7 +66,7 @@ lrcde.permutations <- function(   het.sub
 
   ###########################################################################
   # Uses the 'pROC' package for 'roc' function: >require(pROC)
-  roc1 <- roc( truth, p.perms, ci=TRUE )
+  roc1 <- pROC::roc( truth, p.perms, ci=TRUE )
   auroc <- round( roc1$auc, 3 )
   ###########################################################################
   

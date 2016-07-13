@@ -11,7 +11,7 @@
 #' @keywords Deconvolution cell type-specific differential expression detection power analysis
 #' @export
 #' @examples
-#' get.permuted.p.values( 3.D.array.of.permuted.difference.estimates, actual.difference.estiamtes, alt.is='greater', cell.p=1 )
+#' get.permuted.p.values(  diff.perms.func, diffs.func, alt.is, cell.p  )
 
 get.permuted.p.values <- function( diff.perms.func, diffs.func, alt.is, cell.p )
 {

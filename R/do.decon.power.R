@@ -4,13 +4,16 @@
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}, Mikhail G Dozmorov, \email{Mikhail.Dozmorov@@vcuhealth.org}
 #' @references \url{https://github.com/ERGlass/lrcde.dev}
 #' @param decon.list  List output by 'do.dual.decon' (or 'do.single.decon') function.  Containst lm fit object with regression results per group.
+#' @param groups Group membership indicator vector.
+#' @param direction One of "two.sided", "greater", or "less" indicating direction of difference testing.
+#' @param nonNeg Boolean indicating whether to force differential expression estimates to be non negative.
 #' @return power.list  Results of power analysis.
 #' @keywords Deconvolution cell type-specific differential expression detection power analysis
 #' @details
 #' This function is the main analysis part of the LRCDE package.  Here is where critical difference between control and case groups is estimated.
 #' @export
 #' @examples
-#' do.decon.power( decon.list )
+#' do.decon.power( decon.list, groups, direction, nonNeg   )
 do.decon.power <- function(  decon.list, groups, direction, nonNeg  )
 {
 
