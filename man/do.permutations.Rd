@@ -7,19 +7,19 @@
 do.permutations(het, cell.props, groups, nperms = 100, medCntr, stdz, nonNeg)
 }
 \arguments{
+\item{het}{Should be samples by genomic site (rows by columns).  The samples by genomic measures heterogeneous observations matrix.}
+
 \item{cell.props}{Should be samples by cell types (rows by columns).  The relative cell proportions per sample.}
 
 \item{groups}{A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.}
+
+\item{nperms}{Integer value indicating number of group label permutations to perform when simulating each site's parameters.}
 
 \item{medCntr}{Boolean indicating whether to median center differential expression estimates.}
 
 \item{stdz}{Boolean indicating whether to 'standardize' differential expression estimates.}
 
 \item{nonNeg}{Boolean indicating whether to force cell type-specific expression estiamtes to be non-negative.}
-
-\item{het.sub}{Should be samples by genomic site (rows by columns).  The samples by genomic measures heterogeneous observations matrix.}
-
-\item{n.perms}{Integer value indicating number of group label permutations to perform when simulating each site's parameters.}
 }
 \value{
 An 3-dimensional array of cell type-specific differential expression estimates for each permutation by each cell type by each genomic site.
@@ -28,7 +28,7 @@ An 3-dimensional array of cell type-specific differential expression estimates f
 Called from sim_driver_script.
 }
 \examples{
-do.permutations( het.obs, cell.props, groups, n.perms=1000  )
+do.permutations( het.obs, cell.props, groups, n.perms=1000,  medCntr, stdz, nonNeg )
 }
 \author{
 Edmund R Glass, \email{Edmund.Glass@gmail.com}

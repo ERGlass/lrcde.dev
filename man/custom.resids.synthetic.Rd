@@ -8,11 +8,15 @@ custom.resids.synthetic(mse2model.vec, groups, diff.2.model.vec, base.expr.vec,
   adjuster = 1)
 }
 \arguments{
+\item{mse2model.vec}{The vector of mean squared errors (MSEs) to model}
+
 \item{groups}{A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.}
 
-\item{resids.gene.j}{The residuals for both study groups for the genomic site j of interest.}
+\item{diff.2.model.vec}{Vector of cell type-specific differential expressions to create.}
 
-\item{num.genes.desires}{Number of genomic sites to simulate based on genomic site j.}
+\item{base.expr.vec}{Vector of base (control group) cell type specific expressions to model}
+
+\item{adjuster}{A scaling factor used on the resulting standard deviation of residuals.}
 }
 \value{
 syn.resids  Synthetic normal residuals based on standard deviations of control and cases residuals from resids.gene.j.
@@ -21,7 +25,7 @@ syn.resids  Synthetic normal residuals based on standard deviations of control a
 Called from user lrcde wrapper script (see example 'lrcde.wrapper.sims.R').
 }
 \examples{
-custom.resids.synthetic(het.obs, cell.props, groups, n.perms=1000, file.ext="my.results", cell.vector.to.analyze, proj.root="Project.directory", output.dir="output.dir" )
+custom.resids.synthetic( mse2model.vec, groups, diff.2.model.vec, base.expr.vec, adjuster=1  )
 }
 \author{
 Edmund R Glass, \email{Edmund.Glass@gmail.com}

@@ -22,7 +22,7 @@ sig.perms.func  Vector of permutation p.values for each genomic site.
 Called from sim_driver_script
 }
 \examples{
-get.permuted.p.values( 3.D.array.of.permuted.difference.estimates, actual.difference.estiamtes, alt.is='greater', cell.p=1 )
+get.permuted.p.values(  diff.perms.func, diffs.func, alt.is, cell.p  )
 }
 \author{
 Edmund R Glass, \email{Edmund.Glass@gmail.com}, Mikhail G Dozmorov, \email{Mikhail.Dozmorov@vcuhealth.org}

@@ -12,9 +12,11 @@ custom.sim.cell.expr(num.cells = 5, base.expr.vec, diff.2.model.vec, cell.p,
 
 \item{base.expr.vec}{Control group expression level to simulate at the cell type-specific level.}
 
+\item{diff.2.model.vec}{Absolute difference between control group and cases group to simulate at the cell type-specific level.}
+
 \item{cell.p}{Number of cell type to alter between controls and cases for simulation purposes.}
 
-\item{diff.expr.vec}{Absolute difference between control group and cases group to simulate at the cell type-specific level.}
+\item{len.mse.vec}{Total length of the MSE vector (used to calculate needed number of repeats of permutations of base and difference.)}
 }
 \value{
 cell.expr Cell expressions matrix.
@@ -23,7 +25,7 @@ cell.expr Cell expressions matrix.
 Called from a user wrapper script (see example 'lrcde.wrapper.sims.R').
 }
 \examples{
-custom.sim.cell.expr( num.cells.2.simulate, base.expression.vector, difference.2.simulate.vector, cell.2.modify )
+custom.sim.cell.expr( num.cells.2.simulate, base.expression.vector, difference.2.simulate.vector, cell.2.modify, len.mse.vec )
 }
 \author{
 Edmund R Glass, \email{Edmund.Glass@gmail.com}

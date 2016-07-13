@@ -25,9 +25,11 @@ lrcde.permutations(het.sub, cell.props, groups, medCntr = FALSE,
 
 \item{direction}{Should be one of "two.sided", "up", or "down".  Which direction to test for cell type-specific expression changes.}
 
-\item{output.file}{file name to output the results. Default: LRCDE_power.analysis.csv.}
+\item{n.perms}{Number of permutations of group labels to perform}
 
-\item{VERBOSE}{Boolean indicating whether to output progess indication to console.  Default is TRUE.}
+\item{cell.p}{The simulation differentiated target cell.}
+
+\item{truth}{The truth indicator vector of which simulated "genes" in the target cell are differentiated between cases and controls.}
 }
 \value{
 List containing data.frame (total.frame) of analysis results and a list of parameter values supplied to lrcde function (arg.used).

@@ -7,6 +7,8 @@
 cell.props.target(n.cells, n.samps, target.sd, target.cd)
 }
 \arguments{
+\item{n.cells}{Total number of cell types to simulate.}
+
 \item{n.samps}{Sample size for cell proportions matrix to create.}
 
 \item{target.sd}{Standard deviation to create across samples for cell of interest.}
@@ -23,7 +25,7 @@ Creates synthetic cell proportions which targets both a specific cell proportion
 NOTE: DO not attempt to specify a condition number less than 15.  Function will crash.
 }
 \examples{
-cell.props.target(  n.samps, target.sd, target.cd )
+cell.props.target( n.cells,  n.samps, target.sd, target.cd )
 
 }
 \author{
