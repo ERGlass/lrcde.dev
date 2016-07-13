@@ -29,16 +29,16 @@ do.decon.power <- function(  decon.list, groups, direction, nonNeg  )
   se2 = decon.list[[5]]
 
   # Use se to get tail of 95% CI: (These are used to compute 'diff.critical' below.)
-  if( direction == "two.sided"){
+  if( direction == "two.sided") {
     se1.tail = se1 * qt( 0.975, n.control - 1 , lower.tail=TRUE )
     se2.tail = se2 * qt( 0.975, n.case    - 1 , lower.tail=TRUE )
   } else {
     se1.tail = se1 * qt( 0.950, n.control - 1 , lower.tail=TRUE )
-    se2.tail = se2 * qt( 0.950, n.case   - 1 , lower.tail=TRUE )
+    se2.tail = se2 * qt( 0.950, n.case    - 1 , lower.tail=TRUE )
   }
 
   # Cell type specific expression estimates per group:
-  deconv = decon.list[[3]]
+  deconv    = decon.list[[ 3 ]]
   base.expr = deconv[[ 1 ]]$coefficients   # Cell-type specific expression estimates from group 1
   case.expr = deconv[[ 2 ]]$coefficients   # Cell-type specific expression estimates from group 2
 
@@ -55,8 +55,12 @@ do.decon.power <- function(  decon.list, groups, direction, nonNeg  )
   
   # case.dist =   ( base.expr + se1.tail ) - ( base.expr + abs( diffs ) )
   case.dist =   as.matrix(( se1.tail ) - ( abs( diffs ) ))
-  power     = pt( case.dist, n.case - 1 , lower.tail=FALSE )
-
+  
+  case.t = case.dist / se2
+  
+  # power     = pt( case.dist, n.case - 1 , lower.tail=FALSE )
+  power     = pt( case.t , n.case - 1 , lower.tail=FALSE )
+  
   ###########################################################################
   diff.critical = abs(diffs) - ( se1.tail + se2.tail )
 
