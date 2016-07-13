@@ -13,7 +13,7 @@ Just issue the following command:
 install_github("ERGlass/lrcde.dev", build_vignettes=TRUE)
 ```
 
-Note that LRCDE depends upon the dplyer and pROC packages.
+Note that LRCDE depends upon the dplyr and pROC packages.
 
 ### Test the LRCDE installation.
 
@@ -40,5 +40,9 @@ type:
  browseVignettes('lrcde')
 ```
 
-Read the vignette and use the code examples to run your own quick simulation.
+Read the "Using LRCDE" vignette and use the code examples to run your own quick simulation.
+
+The "LRCDE Permutations for AUC Variability" is a more elaborate demonstration.  Caution: The permutations will take about 20 minutes or so to run.
+This is the code which demonstrates AUROC variability when condition number (kappa) of the cell proportions predictor matrix is very high.
+The plotting facility in the permutations vignette depends upon the package 'Hmisc'.
 
