@@ -1,0 +1,135 @@
+---
+title: "Replicating csSAM results for kidney data"
+author: "Edmund R Glass"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Replicating csSAM results for kidney data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+In order to test whether we could replicate results published with the csSAM algorithm, we downloaded the kidney transplant data from Gene Expression Omnibus.
+
+## Initial setup
+
+First: user must start by declaring the working directory where a .pdf output FDR plot-file will be written.
+
+Then proceed to obtain kidney transplant data:
+```{r, eval=FALSE, results="hide"}
+library(CellMix)
+library(GEOquery)
+library(dplyr)
+
+mix <- ExpressionMix("GSE20300") # ONLY CASE v CONTROL: Shen-Orr kidney rejection
+
+het <- exprs(mix)           # Heterogeneous matrix
+cell.props <- coef(mix)     # cell proportions
+cell.props <- t(cell.props) # proper orientation of cell proportions for csSAM analysis.
+
+# Compare to Shen-Orr et al 2010 Supplementary table 3:
+# Separating controls from cases here:
+cell.props.stable <- cell.props[  c(1,8,9,11,16,17,18,19,23), ]
+cell.props.acr    <- cell.props[ -c(1,8,9,11,16,17,18,19,23), ]
+
+# Since linear regression is done per group,
+# look at group-wise condition number of cell proportions matrices:
+kappa(t(cell.props.stable)%*%cell.props.stable, exact=TRUE)
+kappa(t(cell.props.acr)%*%cell.props.acr, exact=TRUE)
+
+# Get sample names:
+samples.stable = rownames(cell.props.stable)
+samples.acr    = rownames(cell.props.acr)
+m.control      = length(samples.stable)
+m.cases        = length(samples.acr)
+
+# Group membership vector
+groups = c(rep(1, m.control), rep(2,m.cases))
+
+# Separate Cases from Controls in het matrix:...
+het.stable = het[ , samples.stable ]
+het.acr    = het[ , samples.acr    ]
+
+# ...then recombine into 'G' matrix:
+het.stable.frame = as.data.frame( het.stable )
+het.acr.frame    = as.data.frame( het.acr    )
+
+het.stb.frame.rows = dplyr::add_rownames( het.stable.frame )
+het.acr.frame.rows = dplyr::add_rownames( het.acr.frame    )
+
+G.tall.frame = left_join( het.stb.frame.rows,  het.acr.frame.rows , by="rowname" )
+
+G = t(G.tall.frame) # Re-orient for csSAM analysis
+
+dim(G)
+G[1:4, 1:5]
+colnames(G) = G[1,]  # Get colnames from "rownames"
+G = G[-1,]           # Drop "rownames" row
+G = as.matrix(G)     # Make sure its a numeric matrix
+class(G) = "numeric"
+############################################
+# create 'cc' matrix:
+cc <-    rbind( cell.props.stable, cell.props.acr )
+# Notice collumn standard deviations of blood cell proportions
+apply(cc, 2, sd)
+# These sum imperfectly to 1
+apply(cc,1,sum)
+# Make sure sample labels line up between the heterogeneous matrix and the cell proportions matrix:
+cbind(rownames(G), rownames(cc))       # sanity checking
+all.equal(rownames(G), rownames(cc))   # They should line up
+# Both matrices are conformal for analysis:
+dim(G); dim(cc); groups
+###############################################################################
+```
+
+In order to replicate the FDR plots published with csSAM supplemental material, the following 'greater' was declared for the 'alternative' parameter:
+```{r, eval=FALSE, results="hide"}
+alternative='greater' # One of: 'less', 'greater', or 'two.sided'
+```
+
+In order to replicate the FDR plots published with csSAM, the following settings were used in order to median center and standardize any differential expression detection:
+```{r, eval=FALSE, results="hide"}
+stdz=TRUE; medCntr=TRUE; nonNeg=TRUE
+```
+
+The following code runs the canned csSAM analysis.  The resulting FDR plots will be written as a pdf to current working directory.
+```{r, eval=FALSE, results="hide"}
+# Run canned csSAM:
+library("csSAM")
+n.perms = 200
+y <- factor(groups)
+numset = nlevels(y)
+n <- summary(y, maxsum=Inf) # number of samples in each class
+numgene = ncol(G)
+numcell = ncol(cc)
+geneID = colnames(G)
+cellID = colnames(cc)
+deconv <- list()
+# run analysis
+set.seed( 11221963 )
+
+for (curset in levels(y))
+  deconv[[curset]]= csfit(cc[y==curset,], G[y==curset,])
+
+rhat <- array(dim = c(numcell,numgene))
+
+rhat[, ] <- csSAM(deconv[[1]]$ghat, deconv[[1]]$se,
+                  n[1], deconv[[2]]$ghat, deconv[[2]]$se, n[2],
+                  standardize=stdz, medianCenter=medCntr, nonNeg=nonNeg)
+
+tt.sam <- runSAM(G, y)
+
+falseDiscovR <- fdrCsSAM( G,cc,y,n,numcell,numgene, rhat,
+                         nperms = n.perms,standardize=stdz,alternative=alternative,
+                         medianCenter=medCntr, nonNeg=nonNeg)
+
+falseDiscovRSAM <- fdrSAM(G, y, nperms=n.perms, alternative=alternative,tt.sam)
+sigGene <- findSigGene( G, cc, y, rhat, falseDiscovR )
+
+cssam.plotfile = paste0(  "csSAM_FDR_plots.", alternative , ".pdf")
+plotCsSAM( falseDiscovR, falseDiscovRSAM, alternative=alternative, cellID, numcell, fileName=cssam.plotfile )
+
+```
+
+The resulting FDR plots appear to closely replicate those published in Supplementary figure 5e, 5h, and 5k of Shen-Orr et al 2010, for monocytes, lymphocytes, and neutrophils.  Note that this was a one-tailed test for up-regulation (alternative='greater') and that we needed to median center and standardize differential expression estimates in order to replicate these plots.
+

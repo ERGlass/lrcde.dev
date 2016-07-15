@@ -1,0 +1,195 @@
+---
+title: "Random data testing with LRCDE"
+author: "Edmund R Glass"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Random data testing with LRCDE}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+LRCDE is a linear regression deconvolution package.
+
+This vignette explores what happens when we feed completely random data to LRCDE and to csSAM.
+
+## Initial setup
+
+First: user must start by declaring the working directory where a .CSV output file will be written.
+
+Second: A few parameters need to be defined before creating completely random data.
+```{r, eval=FALSE, results="hide"}
+library(lrcde) # Load the lrcde package
+
+# Custom parameters to model:
+    n.samps      = 15     # Sample size per group
+    n.cells      = 5      # Number of cell types to model
+    n.genes.rand = 1000   # Number of completely random "genes" to model.
+    r.noise      = 0.5    # Standard deviation of random heterogeneous observations.
+```
+
+NOTE: Since we are creating a comletely random heterogeneous observations matrix, there is no need to model differential expression at the cell specific level, so we skip simulating cell level expression all-together.
+
+Once paramters have been declared, simulate data:
+```{r, eval=FALSE, results="hide"}
+###############################################################################
+# Simulate data:
+    
+# For the sake of reproducibility, you should set a seed:
+seed2set = (11221963)
+
+# Group indicator vector (group membership indicator - should NOT be a factor here!):
+groups = c(rep(1,n.samps), rep(2,n.samps) )
+
+# Create random cell proportions:    
+set.seed(seed2set)
+cc <- matrix(runif( n.cells*n.samps ), ncol=n.cells )
+cell.props.1 <- t(scale(t(cc), center=FALSE, scale=rowSums(cc)))
+
+# How the cell proportions turned out:
+apply(cell.props.1, 2, sd)
+ # NOTE: This is VERY low kappa (condition number) compared to kidney data:
+kappa(t(cell.props.1)%*%cell.props.1, exact=TRUE)
+# Stack control and cases (identical) cell proportions:    
+cell.props = rbind( cell.props.1, cell.props.1 )
+
+# If creating totally random normal heterogeneous matrix:    
+het.obs = matrix( rnorm( 2*n.samps * n.genes.rand, 5, r.noise ), nrow=( 2*n.samps ) )
+colnames( het.obs ) = 1:dim( het.obs )[2]
+colnames( cell.props ) = 1:dim( cell.props )[2]
+
+```
+
+## Running the LRCDE function
+
+Using the random data that you just simulated, you now call the lrcde function.  The main function in the LRCDE package.
+
+The following three parameter will automatically default to the following values if undeclared in the call to lrcde.
+The values shown below are the recommended settings.
+
+```{r, eval=FALSE, results="hide"}
+    ###############################################################################
+    # Use these for LRCDE since power calculation is meaningless if
+    #      differences are transformed but standard errors are not:
+    stdz=FALSE; medCntr=FALSE; nonNeg=TRUE
+    ###############################################################################
+```
+
+The 'method to use' will default to 'dual' since this is the only method implemented.
+
+It is good to specically declare the name of your output file (leave the .csv extension).
+
+The 'alternative' can be one of 'two.sided', 'greater', or 'less'.  Default is 'two.sided'.
+
+```{r, eval=FALSE, results="hide"}
+    method2use="dual" # Which type of deconvolution to run (dual is only thing implemented)
+
+    lrcde.output.file   = paste0( "lrcde_sim_example.csv"  )
+    alternative='two.sided' # One of "two.sided", "greater", or "less"
+
+    # Run LRCDE:
+    return.list = lrcde(  het.obs, cell.props, groups
+                          , output.file = lrcde.output.file
+                          , medCntr     = medCntr
+                          , stdz        = stdz
+                          , nonNeg      = nonNeg
+                          , method      = method2use
+                          , direction   = alternative
+    )
+```
+
+Now observe the percentage of times that we see power greater than 0.8 for a detected difference at the cell type-specific level:
+```{r, eval=FALSE, results="hide"}
+
+auc.frame = return.list[[1]]
+# auc.frame
+    
+cell1.frame = auc.frame[auc.frame$cell == 1, ]
+cell2.frame = auc.frame[auc.frame$cell == 2, ]
+cell3.frame = auc.frame[auc.frame$cell == 3, ]
+cell4.frame = auc.frame[auc.frame$cell == 4, ]
+cell5.frame = auc.frame[auc.frame$cell == 5, ]
+
+cell1.sigs = cell1.frame[cell1.frame$power >= .8  , ]
+cell2.sigs = cell2.frame[cell2.frame$power >= .8  , ]
+cell3.sigs = cell3.frame[cell3.frame$power >= .8  , ]
+cell4.sigs = cell4.frame[cell4.frame$power >= .8  , ]
+cell5.sigs = cell5.frame[cell5.frame$power >= .8  , ]
+
+divisor = dim(auc.frame)[1]/5
+
+# ALL the following are properly around 0.05 for random heterogeneous matrix:
+dim(cell1.sigs)[1]/divisor
+dim(cell2.sigs)[1]/divisor
+dim(cell3.sigs)[1]/divisor
+dim(cell4.sigs)[1]/divisor
+dim(cell5.sigs)[1]/divisor
+
+###############################################################################
+```
+
+If you re-run the random generation of the heterogeneous matrix, the proportion of sites with power greater than 0.8 will hover around 0.05,
+
+These random heterogeneous observations and random cell proportions can also be analyzed using csSAM:
+
+```{r, eval=FALSE, results="hide"}
+# Run canned csSAM to get FDR for random data:
+library("csSAM")
+G = het.obs
+cc = cell.props   # groups = groups
+n.perms = 1000
+# alternative='two.sided' # One of: 'less', 'greater', or 'two.sided'
+y <- factor(groups)
+numset = nlevels(y)
+n <- summary(y, maxsum=Inf) # number of samples in each class
+numgene = ncol(G)
+numcell = ncol(cc)
+geneID = colnames(G)
+cellID = colnames(cc)
+deconv <- list()
+# run analysis
+set.seed( seed2set )
+
+for (curset in levels(y))
+  deconv[[curset]]= csfit(cc[y==curset,], G[y==curset,])
+
+rhat <- array(dim = c(numcell,numgene))
+
+rhat[, ] <- csSAM(deconv[[1]]$ghat, deconv[[1]]$se,
+                  n[1], deconv[[2]]$ghat, deconv[[2]]$se, n[2],
+                  standardize=stdz, medianCenter=medCntr, nonNeg=nonNeg)
+
+tt.sam <- runSAM(G, y)
+
+falseDiscovR <- fdrCsSAM( G,cc,y,n,numcell,numgene, rhat,
+                         nperms = n.perms,standardize=stdz,alternative=alternative,
+                         medianCenter=medCntr, nonNeg=nonNeg)
+
+falseDiscovRSAM <- fdrSAM(G, y, nperms=n.perms, alternative=alternative,tt.sam)
+sigGene <- findSigGene( G, cc, y, rhat, falseDiscovR )
+
+site.ids = colnames(G)
+length(site.ids)
+colnames(sigGene) = site.ids
+rownames(sigGene) = colnames(cc)
+
+```
+
+Now look at the number of FDR rates below some threshold.
+It appears that the csSAM package does not produce any appreciable number of low FDR rates using the totally random heterogeneous data.
+```{r, eval=FALSE, results="hide"}
+getwd()
+dim(sigGene)
+
+sigGene.1 = sigGene[ 1,  ]
+sigGene.2 = sigGene[ 2,  ]
+sigGene.3 = sigGene[ 3,  ]
+sigGene.4 = sigGene[ 4,  ]
+sigGene.5 = sigGene[ 5,  ]
+
+min(sigGene); max(sigGene)
+# [1] 0.9963316
+# [1] 1
+```
+
+

@@ -48,7 +48,7 @@ apply(cell.props, 2, sd)
 # Cell proportion standard deviation > 0.06 across samples should produce reasonable differential detection power.
 # Brain     Liver      Lung 
 # 0.2613150 0.2859059 0.2837341
-apply(cell.props, 1, sum)            # These sum perfectly to 1.  NOT suitable for single-step deconvolution.
+apply(cell.props, 1, sum)            # These sum perfectly to 1.
 
 # Create (artificially) two groups
 p.sub.1 = p.sub[ (p.sub$Brain + p.sub$Lung) >  ( p.sub$Liver )     ,]
@@ -72,7 +72,7 @@ table(groups)
 
 power.analysis.df = lrcde( het2use, cell.props, groups
                            , output.file = "LRCDE_power_analysis_results"
-                           , FEEDBACK = TRUE, medCntr = FALSE, stdz = FALSE, nonNeg = TRUE
+                           , VERBOSE = TRUE, medCntr = FALSE, stdz = FALSE, nonNeg = TRUE
                            , method = "dual", direction = "two.sided")
 
 

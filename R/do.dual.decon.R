@@ -3,11 +3,12 @@
 #' Performs the core functionality of LRCDE.  This function does the actual linear regression deconvolution per group.
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}
 #' @references \url{https://github.com/ERGlass/lrcde.dev}
-#' @param het.sub.sub The samples by genomic measures het.suberogeneous observations matrix
+#' @param het.sub The samples by genomic measures het.suberogeneous observations matrix
 #' @param cell.props  Should be samples by cell types (rows by columns).  The relative cell proportions per sample.
 #' @param groups Vector of 1's and 2's indicating group membership (controls and cases).
+#' @param medCntr Boolean indicatinng whether to median center difference estimates.
+#' @param stdz Boolean indicating whetehr to standardize difference estimates.
 #' @param nonNeg Boolean indicating whet.subher to force cell type-specific expression estiamtes to be non-negative.
-#' @param GET.FOLDS Boolean idicating whet.subher to take the absolute difference between group-wise cell type-specific estimate or to take ratio between cases and controls (for fold change estimate).
 #' @return Returns a list containing group-wise difference estimates, regression residuals, lm objects per group, and standard errors of cell type-specific expression estimates.  Also returns a two item list containing results of Breusch-Pagan test.
 #' @keywords Deconvolution cell type-specific differential expression detection power analysis
 #' @details
@@ -16,7 +17,7 @@
 #' This is the core functionality of linear regression cell type-specific differential expression detection.
 #' @export
 #' @examples
-#' do.dual.decon( het.sub.obs, cell.props, groups, medCntr, stdz, nonNeg, GET.FOLDS=FALSE )
+#' do.dual.decon( het.sub.obs, cell.props, groups, medCntr, stdz, nonNeg  )
 
 do.dual.decon <- function( het.sub, cell.props, groups, medCntr, stdz, nonNeg  )
 {

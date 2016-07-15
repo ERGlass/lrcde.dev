@@ -5,13 +5,14 @@
 #' @references \url{https://github.com/ERGlass/lrcde.dev}
 #' @param num.cells Number of cell types to simulate.
 #' @param base.expr.vec Control group expression level to simulate at the cell type-specific level.
-#' @param diff.expr.vec Absolute difference between control group and cases group to simulate at the cell type-specific level.
+#' @param diff.2.model.vec Absolute difference between control group and cases group to simulate at the cell type-specific level.
 #' @param cell.p Number of cell type to alter between controls and cases for simulation purposes.
+#' @param len.mse.vec Total length of the MSE vector (used to calculate needed number of repeats of permutations of base and difference.)
 #' @return cell.expr Cell expressions matrix.
 #' @keywords Deconvolution cell type-specific differential expression detection power analysis
 #' @export
 #' @examples
-#' custom.sim.cell.expr( num.cells.2.simulate, base.expression.vector, difference.2.simulate.vector, cell.2.modify )
+#' custom.sim.cell.expr( num.cells.2.simulate, base.expression.vector, difference.2.simulate.vector, cell.2.modify, len.mse.vec )
 
 custom.sim.cell.expr <- function(  num.cells=5
                                   , base.expr.vec
@@ -27,7 +28,10 @@ custom.sim.cell.expr <- function(  num.cells=5
   # Apply differential expression to cell.p in cases:
   diff.reps = length( base.expr.vec)
   diff.rep.vec = rep( diff.2.model.vec, each = diff.reps, times = len.mse.vec )
-  cells.cases[ cell.p ,  ] =  cells.control[ cell.p ,  ] + diff.rep.vec
+  
+  for(p in cell.p) {# print(p)
+    cells.cases[ p ,  ] =  cells.control[ p ,  ] + diff.rep.vec
+  }
 
   # combine controls and cases:
   cell.expr = rbind( cells.control, cells.cases )

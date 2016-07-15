@@ -7,16 +7,19 @@
 group.wise.sample.size(groups)
 }
 \arguments{
-\item{groups}{A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.}
+\item{groups}{A vector of identifiers indicating group membership per sample.
+Should have the same length as the number of rows in het.sub and cell.props.}
 }
 \value{
-n  A vector containing control and cases sample sizes.
+n  A vector containing group-wise sample sizes.
 }
 \description{
-Utility function to keep from having to pass group-wise sample sizes between functions.
+Utility function to avoid passing group-wise sample sizes between functions.
 }
 \examples{
-group.wise.sample.size( groups )
+\dontrun{
+group.wise.sample.size(group = rep(1:3, each = 5)) # Three groups, 5 samples each
+}
 }
 \author{
 Edmund R Glass, \email{Edmund.Glass@gmail.com}
