@@ -8,6 +8,8 @@ I recommend installing the "devtools" package by Hadley Wickham.
 
 The devtools package contains a function which allows painless installation of R packages from GitHub:
 
+I recommend installing the package "knitr" in order to build the vignettes contained in the package. The vignettes provide getting started instructions for the LRCDE package and will help demystify the operation and features that LRCDE contains.
+
 Just issue the following command:
 ```{r}
 install_github("ERGlass/lrcde.dev", build_vignettes=TRUE)
@@ -26,7 +28,7 @@ The default output file will be "LRCDE_power_analysis.csv" which will be written
 
 Remaining input parameters to the lrcde function are already set to the recommended defaults.
 
-issue the command:
+After you have setup your data matrices "het.matrix" and "cell.props" and the "group" membership vector, issue the command:
 ```{r}
 results.frame = lrcde( het.matrix, cell.props, groups )
 ```
@@ -34,8 +36,9 @@ results.frame = lrcde( het.matrix, cell.props, groups )
 The results of lrcde will be in the results.frame data frame and in the LRCEE_power_analysis.csv file in the current working directory.
 
 ## Quick Start
+The "Using LRCDE" vignette will provide a quick tutorial and help simulate a small data set to test the LRCDE package installation.
 
-type:
+Type:
 ```{r}
  browseVignettes('lrcde')
 ```
