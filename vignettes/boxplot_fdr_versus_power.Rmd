@@ -1,0 +1,204 @@
+---
+title: "Boxplot FDR versus t-statistic p-value"
+author: "Edmund R Glass"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Boxplot FDR versus t-statistic p-value}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Boxplot FDR versus t-statistic p-value
+Be sure to set your preferred working directory.  This is where standard LRCDE output .csv file will be written.
+
+The following code will loop over 19 levels of group-wise sample sizes, computing LRCDE t-statistics and power as well as csSAM FDR rates.
+The LRCDE and csSAM output will then be used in order to compute true positive rates (TPR) of differential expression detection based on the fact that the first 500 simulated genes are known to be differentially expressed.
+```{r, eval=FALSE, results="hide"}
+library( lrcde )
+library( csSAM )
+
+rm(list=ls()) # Start with clean environment
+
+n.samps.vec=c( 10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28 )
+n.genes = 1000                # Number of "genes" to simulate.  Half of these will be "folded".
+n.perms = 1000                # For csSAM permutations
+
+kappa.2.model   = c( 100  )   # Condition number (kappa) to model in cell proportions design matrix
+mse2model.vec   = c( 1    )   # Target MSE to model in residuals (will actually be a fraction of this)
+cell.sd.2.model = c( 0.06 )   # Target cell type proportion standard deviation
+
+n.cells  = c( 5 )             # Number of cells to simulate:
+cell.p = 1                    # The "target" cell (the one with the fold change) for simulations
+base.expr    = c( 2  )        # Base level cell expressions to model:
+diff.2.model = seq( 0.001, 1.0, length.out= 500 ) # Range of differential expressions to model
+
+###############################################################################
+
+tpr.p.vec = vector(); tpr.f.vec = vector(); counter=0
+###############################################################################
+for(n.samps in n.samps.vec) {  
+    
+  counter = counter + 1 # For indexing tpr.p.vec and tpr.f.vec
+  
+  # Simulate data:
+  seed2set = (11221963)
+  # Group indicator vector (group membership indicator):
+  groups = c(rep(1,n.samps), rep(2,n.samps) )
+  
+  # Customized cell expression:
+  sim.cell.expr.perms = function(  n.cells
+                                  , base.expr
+                                  , diff.2.model
+                                  , cell.p
+                                  , n.genes ) {
+    cells.cntl = matrix( rep(base.expr, n.cells*n.genes), nrow=n.cells )
+    cells.case = cells.cntl
+    haf.genes = n.genes / 2
+    cells.case[cell.p,1:haf.genes]=cells.case[cell.p,1:haf.genes] + diff.2.model
+    cells.expr = rbind(cells.cntl, cells.case)
+    return( cells.expr )
+  }
+  
+  cell.expr=sim.cell.expr.perms(n.cells,base.expr,diff.2.model,cell.p,n.genes )
+  
+  haf.genes = n.genes / 2
+  truth = c(  rep(1, haf.genes), rep(0, haf.genes)    )
+
+    # Only looping for permutations:
+    resids = matrix( , ncol=n.genes, nrow= 2*n.samps )
+    for( p in 1:n.genes) {
+      resids[, p ] = custom.resids.synthetic( mse2model.vec
+                                              , groups
+                                              , diff.2.model=2
+                                              , base.expr
+                              # 'adjuster' is a scaling factor for target MSE
+                                              , adjuster=1
+                                              , n.cells )
+    }
+
+
+  auroc.frame = data.frame()
+  power.frame = data.frame()
+
+  # For replicability: set seed before synthesizing cell proportions
+  set.seed( seed2set )
+  cell.props.1 = cell.props.target( n.cells
+                                , n.samps
+                                , cell.sd.2.model
+                                , kappa.2.model )
+
+  # Stack control and cases (identical) cell proportions:    
+  cell.props         = rbind( cell.props.1, cell.props.1 )
+  colnames( cell.props ) = 1:dim( cell.props )[2]   # LRCDE expects to see cell type names
+
+  ###########################################################################
+  ###########################################################################
+  # NOTE !!!  For your perusal:
+  # VERY IMPORTANT DIAGNOSTICS FOR SYNTHETIC CELL PROPORTIONS.  MAKE SURE THESE ARE CORRECT:
+  eigen.values = eigen(t(cell.props.1)%*%cell.props.1)$values
+  min(eigen.values); max(eigen.values)              # min and max eigen values
+  abs(max(eigen.values)/min(eigen.values))          # Calculated condition number.
+  kappa(t(cell.props.1)%*%cell.props.1, exact=TRUE) # The R version of condition number.
+  apply(cell.props.1, 1, sum)                       # Sum of proportions per sample
+  det(t(cell.props.1)%*%cell.props.1)               # The determinant
+  ###########################################################################
+  ###########################################################################
+
+  # Sim het obs:
+  het.obs = het.from.synthetic(    cell.props
+                                 , cell.expr
+                                 , resids
+                                 , groups )
+  
+  colnames( het.obs ) = 1:dim( het.obs )[2]         # LRCDE expects to see feature names
+  colnames( cell.props ) = 1:dim( cell.props )[2]   # LRCDE expects to see cell type names
+
+  method2use="dual"
+  lrcde.output.file   = paste0( "ROC_for_power.csv"  )
+  alternative='two.sided' # One of "two.sided", "greater", or "less"
+  # Run LRCDE:
+  ###############################################################################
+  # Use these for LRCDE since power calculation is meaningless if
+  #      differences are transformed but standard errors are not:
+  # DO NOT standardize (stdz) or median center (medCntr) difference estimates !!!
+  stdz=FALSE; medCntr=FALSE; nonNeg=TRUE
+  ###############################################################################
+  return.list = lrcde.ttest(  het.obs, cell.props, groups
+                              , output.file = lrcde.output.file
+                              , medCntr     = medCntr
+                              , stdz        = stdz
+                              , nonNeg      = nonNeg
+                              , method      = method2use
+                              , direction   = alternative
+  )
+  
+  auc.frame = return.list[[1]]
+  p.vec = auc.frame$p.val.t[1:n.genes]
+    
+  ###############################################################################
+  ###############################################################################
+  # Run canned csSAM:
+  # csSAM appears to produce better (more significant) FDRs when median centering
+  # and standardizing cell type-specific difference estimates.
+  stdz=TRUE; medCntr=TRUE; nonNeg=TRUE
+  G = het.obs                 # Use exact same data as was fed to LRCDE
+  cc = cell.props
+  y <- factor(groups)
+  
+  numset = nlevels(y)
+  n <- summary(y, maxsum=Inf) # number of samples in each class
+  numgene = ncol(G)
+  numcell = ncol(cc)
+  geneID = colnames(G)
+  cellID = colnames(cc)
+  deconv <- list()
+  # run analysis
+  set.seed( seed2set )
+  for (curset in levels(y))
+    deconv[[curset]]= csfit(cc[y==curset,], G[y==curset,])
+  
+  rhat <- array(dim = c(numcell,numgene))
+  
+  rhat[, ] <- csSAM(deconv[[1]]$ghat, deconv[[1]]$se,
+                    n[1], deconv[[2]]$ghat, deconv[[2]]$se, n[2],
+                    standardize=stdz, medianCenter=medCntr, nonNeg=nonNeg)
+  
+  falseDiscovR <- fdrCsSAM( G,cc,y,n,numcell,numgene, rhat,
+                           nperms = n.perms,standardize=stdz,alternative=alternative,
+                           medianCenter=medCntr, nonNeg=nonNeg)
+  
+  sigGene <- findSigGene( G, cc, y, rhat, falseDiscovR )
+  # End csSAM analysis
+  ###############################################################################
+  ###############################################################################
+  
+  # set desired thresholds:
+  fdr.thresh = 0.2
+  p.thresh = 0.025
+  
+  fdr.vec = sigGene[ cell.p, 1:500 ]
+  p.vec.500 = p.vec[1:500]
+  
+  fdr.pos = ifelse( fdr.vec <= fdr.thresh, 1, 0)
+  fdr.pos[is.na(fdr.pos)] = 0
+  p.pos = ifelse( p.vec.500 <= p.thresh , 1, 0 )
+  
+  tpr.p = sum( p.pos  ) / haf.genes
+  tpr.f = sum( fdr.pos ) / haf.genes
+  
+  tpr.p.vec[ counter ] = tpr.p
+  tpr.f.vec[ counter ] = tpr.f
+
+
+} # End loop over sample sizes
+###############################################################################
+
+boxplot(cbind(tpr.f.vec, tpr.p.vec), main="Range of sample sizes")
+
+###############################################################################
+```
+
+
+
+
