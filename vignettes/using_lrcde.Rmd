@@ -28,7 +28,7 @@ You must start by declaring the working directory where a .CSV output file will 
 
 Then you declare a few parameter values for the simulation functions to use.
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
 library(lrcde) # Load the lrcde package
 
 # setwd("/home/your.user.name/output.directory") # change this to suit your own setup and preferences
@@ -64,7 +64,7 @@ As you can see, there will be 10 different effect-sizes models.  Since only a si
 
 Once paramters have been declared, you may simulate data.
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
 ###############################################################################
 # Simulate data:
     
@@ -125,7 +125,7 @@ The values shown below are the recommended settings.
 
 DO NOT standardize or median center differential expression estiamtes when using LRCDE... In fact, I should remove these features from the code.
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
     ###############################################################################
     # Use these for LRCDE since power calculation is meaningless if
     #      differences are transformed but standard errors are not:
@@ -139,7 +139,7 @@ It is good to specically declare the name of your output file (leave the .csv ex
 
 The 'alternative' can be one of 'two.sided', 'greater', or 'less'.  Default is 'two.sided'.
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
     method2use="dual" # Which type of deconvolution to run (dual is only thing implemented)
 
     lrcde.output.file   = paste0( "lrcde_sim_example.csv"  )
@@ -162,7 +162,7 @@ The 'return.list' is a 2 item list.  Item 1 is a dataframe of results of the pow
 
 Take a look at the output data frame for the 10 feature simulation that you just ran
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
     result.frame = return.list[[1]]
     result.frame
 ```
