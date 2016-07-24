@@ -40,11 +40,11 @@ lrcde.permutations <- function(   het.sub
   n.cells       <- dim(cell.props)[2]
   ###########################################################################
   
-  
   ###########################################################################
   # Do group-wise regressions (two regressions per genomic site):
   if (method == "dual") {
-    decon.list <- do.dual.decon(het.sub, cell.props, groups, medCntr=medCntr, stdz=stdz, nonNeg=nonNeg)
+    decon.list <- do.dual.decon( het.sub, cell.props, groups
+                                 , medCntr=medCntr, stdz=stdz, nonNeg=nonNeg)
   }
   ###########################################################################
   
@@ -58,7 +58,6 @@ lrcde.permutations <- function(   het.sub
   
   ###########################################################################
   # Get permuted 'exact' p-values:
-  # alt.is    = "greater";   # two.sided, greater, less
   # Hard coded to 'greater' since we take ABS of estimated differences
   p.perms <- get.permuted.p.values( fold.diff.perms, decon.list[[1]]
                                     , alt.is=direction, cell.p )
@@ -76,11 +75,13 @@ lrcde.permutations <- function(   het.sub
   cell.props.case     <- cell.props[groups == 2, ]
   cell.SDs            <- apply(cell.props, 2, sd)
   
-  # Condition numbers for the cell proportion matrixes (cases and controls are identical):
-  kappa.control       <- kappa(t(cell.props.control) %*% cell.props.control, exact = TRUE)
+  # Condition numbers for the cell proportion matrixes
+  # (cases and controls are identical):
+  kappa.control       <- kappa(t(cell.props.control) %*% cell.props.control
+                               , exact = TRUE)
   ###############################################################################
 
-  return.list = list( p.perms , auroc, kappa.control )
+  return.list = list( p.perms , auroc, kappa.control  )
   return( return.list )
   #############################################################################
 
