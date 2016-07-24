@@ -5,7 +5,7 @@
 \title{custom.resids.synthetic}
 \usage{
 custom.resids.synthetic(mse2model.vec, groups, diff.2.model.vec, base.expr.vec,
-  adjuster = 1)
+  adjuster = 1, n.cells)
 }
 \arguments{
 \item{mse2model.vec}{The vector of mean squared errors (MSEs) to model}
