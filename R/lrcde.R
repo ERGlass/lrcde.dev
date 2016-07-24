@@ -67,7 +67,7 @@
 #'                            direction = "two.sided")
 #' }
 
-lrcde.ttest <- function(  het.sub,
+lrcde <- function(  het.sub,
                     cell.props,
                     groups,
                     output.file = "LRCDE_power_analysis.csv",
@@ -78,7 +78,6 @@ lrcde.ttest <- function(  het.sub,
                     method      = "dual",
                     direction   = "two.sided") {
 
-  
   ###########################################################################
     # TEST cell.proportions here
   ###########################################################################
@@ -95,15 +94,14 @@ lrcde.ttest <- function(  het.sub,
   n.case        <- n[2]
   n.cells       <- dim(cell.props)[2]
   
-   # Do group-wise regressions (two regressions per genomic site):
-  if (method == "dual") {
-    decon.list <- do.dual.decon(het.sub, cell.props, groups, medCntr, stdz, nonNeg)
-  }
-  
   ###############################################################################
-
+  # Do group-wise regressions (two regressions per genomic site):
+  if (method == "dual") {
+    decon.list <- do.dual.decon( het.sub, cell.props, groups, medCntr, stdz, nonNeg )
+  }
   # Returned by do.dual.decon function:
   # decon.list =  list( fold.diff.ests, resids, deconv, se1, se2  ) )
+  ###############################################################################
 
   ###############################################################################
   # Standard two-sample t-test (Welch's test), where assumption is se1 not equal se2:
@@ -154,23 +152,16 @@ lrcde.ttest <- function(  het.sub,
   cell.props.case     <- cell.props[ groups == 2, ]
   cell.SDs            <- apply( cell.props, 2, sd )
   # Condition numbers for the cell proportion matrixes
-  kappa.control       <- kappa( t( cell.props.control) %*% cell.props.control , exact = TRUE)
-  kappa.case          <- kappa( t( cell.props.case   ) %*% cell.props.case    , exact = TRUE)
-  kappa.all           <- kappa( t( cell.props        ) %*% cell.props         , exact = TRUE)
+  kappa.control       <- kappa( t( cell.props.control) %*% cell.props.control , exact = TRUE )
+  kappa.case          <- kappa( t( cell.props.case   ) %*% cell.props.case    , exact = TRUE )
+  kappa.all           <- kappa( t( cell.props        ) %*% cell.props         , exact = TRUE )
   ###############################################################################
-
-  # ###########################################################################
-  # # Do Shapiro-Wilk test on heterogeneous obs
-  # # ...and report p-value in final output:
-  sw.obs   = apply( het.sub, 2, shapiro.test )
-  sw.obs.p = sw.obs[[1]]$p.value
-  ###########################################################################
 
   # ###########################################################################
   # MSE of obs:
   resids = decon.list[[2]]
-  resids.control   = resids[ groups == 1, , drop=FALSE]
-  resids.case      = resids[ groups == 2, , drop=FALSE]
+  resids.control   = resids[ groups == 1, , drop=FALSE ]
+  resids.case      = resids[ groups == 2, , drop=FALSE ]
   resids.control.2 = resids.control ^ 2
   resids.case.2    = resids.case    ^ 2
   sse.control      = apply( resids.control.2 , 2, sum )
@@ -180,8 +171,8 @@ lrcde.ttest <- function(  het.sub,
 
   mse.control.frame = data.frame( as.character(colnames(het.sub)), mse.control, stringsAsFactors = F )
   mse.case.frame    = data.frame( as.character(colnames(het.sub)), mse.case   , stringsAsFactors = F )
-  colnames(mse.control.frame) = c("site", "mse.control")
-  colnames(mse.case.frame)    = c("site", "mse.case")
+  colnames(mse.control.frame) = c( "site", "mse.control" )
+  colnames(mse.case.frame)    = c( "site", "mse.case"    )
   ###########################################################################
 
   #############################################################################
@@ -259,8 +250,6 @@ lrcde.ttest <- function(  het.sub,
   #############################################################################
   # Package the return list object:
   args.used = list(output.file,
-                   medCntr,
-                   stdz,
                    nonNeg,
                    method,
                    direction)
@@ -268,7 +257,4 @@ lrcde.ttest <- function(  het.sub,
   return.list = list( total.frame, args.used )
   return( return.list )
   #############################################################################
-  # } # If output.dir ! exists
-
-#  } # output file exists
 } # End LRCDE
