@@ -78,6 +78,8 @@ lrcde <- function(  het.sub,
                     method      = "dual",
                     direction   = "two.sided") {
 
+  options(stringsAsFactors = FALSE)
+  
   ###########################################################################
     # TEST cell.proportions here
   ###########################################################################
@@ -93,17 +95,21 @@ lrcde <- function(  het.sub,
   n.control     <- n[1]
   n.case        <- n[2]
   n.cells       <- dim(cell.props)[2]
-  
   ###############################################################################
+
+  ###############################################################################
+  ###########################################################################
   # Do group-wise regressions (two regressions per genomic site):
   if (method == "dual") {
-    decon.list <- do.dual.decon( het.sub, cell.props, groups, medCntr, stdz, nonNeg )
+    decon.list <- do.dual.decon( het.sub, cell.props, groups, medCntr, stdz, nonNeg   )
   }
+  
   # Returned by do.dual.decon function:
   # decon.list =  list( fold.diff.ests, resids, deconv, se1, se2  ) )
   ###############################################################################
 
   ###############################################################################
+    # NOTE: For "dual" regression, t-sample t-test is performed "by hand" below:
   # Standard two-sample t-test (Welch's test), where assumption is se1 not equal se2:
   # Balanced or unbalanced samples, and variances not necessarily equal between groups:
   se1 = decon.list[[4]]
@@ -112,7 +118,7 @@ lrcde <- function(  het.sub,
   # Welche's "pooled" standard error:
   se.welches =  sqrt(((se1^2)/n.control) + ((se2^2)/n.case))
   # T-statistic:
-  t.stats = abs( diff.ests )  /  se.welches
+  t.stats = ( diff.ests )  /  se.welches
   # d.f.equal = ( n.control + n.case - 2 )            # Pooled degrees of freedom
   # NOTE: Welches degrees of freedom is reduced from pooled degrees of freedom when standard errors are unequal:
   d.f.numerator = (((se1^2)/n.control) + ((se2^2)/n.case))^2
@@ -127,6 +133,7 @@ lrcde <- function(  het.sub,
   }
   
   t.crit = qt( 1-alpha.half, d.f.welches )
+  
   p.val.t   =  pt( t.stats, d.f.welches, lower.tail=FALSE )
   # OUTPUT: t.stats, p.val.t
   t.stats.out = as.vector( t(t.stats))
@@ -139,9 +146,12 @@ lrcde <- function(  het.sub,
 
   ###############################################################################
   # Power from t-statistic:
-  t.dif = t.crit - t.stats
-  power.t = pt( t.dif , n.case - 1 , lower.tail=FALSE )
-  power.t.out = as.vector(t(power.t))
+  if(direction=="two.sided"){
+    power.test = 1 - pt( t.crit, d.f.welches, t.stats ) + pt( (-1 * t.crit), d.f.welches, t.stats )
+  } else { # one sided
+    power.test = 1 - pt( t.crit, d.f.welches, abs(t.stats) )
+  }
+  power.t.out = as.vector(t(power.test))
   ###############################################################################
 
   diffs.t  = as.data.frame( t( diff.ests ) )
@@ -185,6 +195,9 @@ lrcde <- function(  het.sub,
   base.t   = as.data.frame(t( cell.expr.ests.1 ))
   case.t   = as.data.frame(t( cell.expr.ests.2 ))
 
+  colnames(base.t) = colnames(diffs.t)
+  colnames(case.t) = colnames(diffs.t)
+  
   diffs.t$site  = rownames( diffs.t  )
   base.t$site   = rownames( base.t   )
   case.t$site   = rownames( case.t   )
