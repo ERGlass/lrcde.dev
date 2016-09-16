@@ -28,7 +28,7 @@ You must start by declaring the working directory where a .CSV output file will 
 
 Then you declare a few parameter values for the simulation functions to use.
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
 library(lrcde) # Load the lrcde package
 
 # setwd("/home/your.user.name/output.directory") # change this to suit your own setup and preferences
@@ -37,15 +37,15 @@ library(lrcde) # Load the lrcde package
 
     n.samps = 15 # Sample size per group
     # Mean Squared Error to model (actual average MSE per gene will be a small fraction of this)
-     mse2model.vec  = c( 0.2)
+     mse2model.vec  = c( 0.05)
      
 # Cell proportion parameterss to model:
     # Target cell standard deviation (across samples) to model:
     cell.sd.2.model = c( 0.08 )
     # Condition number (kappa) to target (resulting kappa will be approximate):
-    kappp.2.model  = c( 71500 )
+    kappa.2.model  = c( 71500 )
     # Number of cells to simulate:
-    n.cells  = c( 5 )
+    n.cells  = c( 3 )
     # The "target" cell (the one with the fold change) for simulations
     cell.p = 1
 
@@ -54,7 +54,7 @@ library(lrcde) # Load the lrcde package
     # Base level cell expressions to model:
     base.expr.vec    = c( 2  )
     # Cell level differential expression to model:
-    diff.2.model.vec = c( 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5 )
+    diff.2.model.vec = c( 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, .1)
 
 ```
 As you can see, there will be 10 different effect-sizes models.  Since only a single mean squared error (MSE) is being modeled, then there will be a simulated heterogeneous matrix with only 10 features modeled.
@@ -64,7 +64,7 @@ As you can see, there will be 10 different effect-sizes models.  Since only a si
 
 Once paramters have been declared, you may simulate data.
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
 ###############################################################################
 # Simulate data:
     
@@ -79,7 +79,7 @@ set.seed(seed2set)
 cell.props.1 = cell.props.target( n.cells             # Number of cells to simulate
                                 , n.samps           # Number of samples (per group) to simulate
                                 , cell.sd.2.model   # Standard deviation of target cell
-                                , kappp.2.model )   # Condition number of cell.props (per group)
+                                , kappa.2.model )   # Condition number of cell.props (per group)
 
 # How did the cell proportions turned out ?:
 apply(cell.props.1, 2, sd)                          # Standard deviation of target cell (cell.p)
@@ -93,7 +93,7 @@ cell.expr = custom.sim.cell.expr(   n.cells           # Number of cell types bei
                                   , base.expr.vec     # The "base" expression level to model
                                   , diff.2.model.vec  # Differential expression to model
                                   , cell.p            # Target cell to modify in cases
-                                  , length(mse2model.vec) )
+                                  , length( mse2model.vec ) )
 
 # Sim residuals:
 set.seed(seed2set)
@@ -101,7 +101,8 @@ resids = custom.resids.synthetic(    mse2model.vec    # Actual MSE will be small
                                    , groups           # groups vector
                                    , diff.2.model.vec # Included to get matrix size correct
                                    , base.expr.vec    # Included to get matrix size correct
-                                   , adjuster=1 )     # Scaling factor for MSE target
+                                   , adjuster=1
+                                   , n.cells )     # Scaling factor for MSE target
 
 # Sim het obs:
 het.obs = het.from.synthetic(   cell.props     # The entire cell proportions matrix
@@ -125,7 +126,7 @@ The values shown below are the recommended settings.
 
 DO NOT standardize or median center differential expression estiamtes when using LRCDE... In fact, I should remove these features from the code.
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
     ###############################################################################
     # Use these for LRCDE since power calculation is meaningless if
     #      differences are transformed but standard errors are not:
@@ -139,7 +140,7 @@ It is good to specically declare the name of your output file (leave the .csv ex
 
 The 'alternative' can be one of 'two.sided', 'greater', or 'less'.  Default is 'two.sided'.
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
     method2use="dual" # Which type of deconvolution to run (dual is only thing implemented)
 
     lrcde.output.file   = paste0( "lrcde_sim_example.csv"  )
@@ -162,7 +163,7 @@ The 'return.list' is a 2 item list.  Item 1 is a dataframe of results of the pow
 
 Take a look at the output data frame for the 10 feature simulation that you just ran
 
-```{r, results="hide"}
+```{r, eval=FALSE, results="hide"}
     result.frame = return.list[[1]]
     result.frame
 ```

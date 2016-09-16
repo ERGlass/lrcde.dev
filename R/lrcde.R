@@ -67,82 +67,111 @@
 #'                            direction = "two.sided")
 #' }
 
-lrcde <- function(het.sub,
-                  cell.props,
-                  groups,
-                  output.file = "LRCDE_power_analysis.csv",
-                  VERBOSE     = TRUE,
-                  medCntr     = FALSE,
-                  stdz        = FALSE,
-                  nonNeg      = TRUE,
-                  method      = "dual",
-                  direction   = "two.sided") {
+lrcde <- function(  het.sub,
+                    cell.props,
+                    groups,
+                    output.file = "LRCDE_power_analysis.csv",
+                    VERBOSE     = TRUE,
+                    medCntr     = FALSE,
+                    stdz        = FALSE,
+                    nonNeg      = TRUE,
+                    method      = "dual",
+                    direction   = "two.sided") {
 
+  options(stringsAsFactors = FALSE)
+  
+  ###########################################################################
+    # TEST cell.proportions here
+  ###########################################################################
+  
+  ###########################################################################
+  # Alpha significance level for t-tests:
+  alpha = 0.05
+  ###########################################################################
+  
   ###########################################################################
   unique.groups <- unique(groups)
   n             <- group.wise.sample.size(groups)
   n.control     <- n[1]
   n.case        <- n[2]
   n.cells       <- dim(cell.props)[2]
-  
-   # Do group-wise regressions (two regressions per genomic site):
-  if (method == "dual") {
-    decon.list <- do.dual.decon(het.sub, cell.props, groups, medCntr, stdz, nonNeg)
-  }
-  
-  # # NOT IMPEMENTED:
-  # # Do group-wise regressions (two regressions per genomic site):
-  # if( method == "ridge" ) {
-  #   decon.list =   do.ridge.decon(  het.sub
-  #                                  , cell.props
-  #                                  , groups
-  #                                  , medCntr, stdz, nonNeg
-  #                                 )
-  # } # ridge
-
   ###############################################################################
 
-  # Returned by any of the above do.*.decon functions:
+  ###############################################################################
+  ###########################################################################
+  # Do group-wise regressions (two regressions per genomic site):
+  if (method == "dual") {
+    decon.list <- do.dual.decon( het.sub, cell.props, groups, medCntr, stdz, nonNeg   )
+  }
+  
+  # Returned by do.dual.decon function:
   # decon.list =  list( fold.diff.ests, resids, deconv, se1, se2  ) )
+  ###############################################################################
+
+  ###############################################################################
+    # NOTE: For "dual" regression, t-sample t-test is performed "by hand" below:
+  # Standard two-sample t-test (Welch's test), where assumption is se1 not equal se2:
+  # Balanced or unbalanced samples, and variances not necessarily equal between groups:
+  se1 = decon.list[[4]]
+  se2 = decon.list[[5]]  # Group-wise standard errors
+  diff.ests = decon.list[[1]]                   # Differential expression estimate
+  # Welche's "pooled" standard error:
+  se.welches =  sqrt(((se1^2)/n.control) + ((se2^2)/n.case))
+  # T-statistic:
+  t.stats = ( diff.ests )  /  se.welches
+  # d.f.equal = ( n.control + n.case - 2 )            # Pooled degrees of freedom
+  # NOTE: Welches degrees of freedom is reduced from pooled degrees of freedom when standard errors are unequal:
+  d.f.numerator = (((se1^2)/n.control) + ((se2^2)/n.case))^2
+  d.f.denom    = ((se1^2)/n.control)^2 / (n.control-1)  +  ((se2^2)/n.case)^2 / (n.case-1)
+  d.f.welches  = d.f.numerator / d.f.denom
+  
+  # Alpha = 0.05 (total):
+  if(direction=="two.sided"){
+    alpha.half = alpha/2
+  } else {
+    alpha.half = alpha
+  }
+  
+  t.crit = qt( 1-alpha.half, d.f.welches )
+  
+  p.val.t   =  pt( t.stats, d.f.welches, lower.tail=FALSE )
+  # OUTPUT: t.stats, p.val.t
+  t.stats.out = as.vector( t(t.stats))
+  p.val.t.out = as.vector( t(p.val.t))
+  se1.out     = as.vector( t( se1 ) )
+  se2.out     = as.vector( t( se2 ) )
+  se.welches.out = as.vector( t(se.welches))
+  t.crit.out  = as.vector( t(t.crit) )
+  ###############################################################################
+
+  ###############################################################################
+  # Power from t-statistic:
+  if(direction=="two.sided"){
+    power.test = 1 - pt( t.crit, d.f.welches, t.stats ) + pt( (-1 * t.crit), d.f.welches, t.stats )
+  } else { # one sided
+    power.test = 1 - pt( t.crit, d.f.welches, abs(t.stats) )
+  }
+  power.t.out = as.vector(t(power.test))
+  ###############################################################################
+
+  diffs.t  = as.data.frame( t( diff.ests ) )
 
   ###############################################################################
   # Cell proportions (cell.props) statistics:
-  cell.props.control  <- cell.props[groups == 1, ]
-  cell.props.case     <- cell.props[groups == 2, ]
-  cell.SDs            <- apply(cell.props, 2, sd)
+  cell.props.control  <- cell.props[ groups == 1, ]
+  cell.props.case     <- cell.props[ groups == 2, ]
+  cell.SDs            <- apply( cell.props, 2, sd )
   # Condition numbers for the cell proportion matrixes
-  kappa.control       <- kappa(t(cell.props.control) %*% cell.props.control, exact = TRUE)
-  kappa.case          <- kappa(t(cell.props.case) %*% cell.props.case, exact = TRUE)
-  kappa.all           <- kappa(t(cell.props) %*% cell.props, exact = TRUE)
+  kappa.control       <- kappa( t( cell.props.control) %*% cell.props.control , exact = TRUE )
+  kappa.case          <- kappa( t( cell.props.case   ) %*% cell.props.case    , exact = TRUE )
+  kappa.all           <- kappa( t( cell.props        ) %*% cell.props         , exact = TRUE )
   ###############################################################################
-
-  # ###########################################################################
-  # # Do Shapiro-Wilk test on heterogeneous obs
-  # # ...and report p-value in final output:
-  sw.obs   = apply( het.sub, 2, shapiro.test )
-  sw.obs.p = sw.obs[[1]]$p.value
-  ###########################################################################
-
-  # ###########################################################################
-  # # Extract R^2 for gene.j from original regression (deconvolution):
-  # # Controls:
-  # fit.controls          = deconv[[ 2 ]]
-  # fit.summs.controls    = summary( fit.controls )
-  # fit.gene.j.controls   = fit.summs.controls[[ gene.j ]]
-  # R.2.adj.control       = fit.gene.j.controls$adj.r.squared
-  #
-  # # Cases:
-  # fit.cases             = deconv[[ 2 ]]
-  # fit.summs             = summary( fit.cases )
-  # fit.gene.j            = fit.summs[[ gene.j ]]
-  # R.2.adj.case          = fit.gene.j$adj.r.squared
-  # ###########################################################################
 
   # ###########################################################################
   # MSE of obs:
   resids = decon.list[[2]]
-  resids.control   = resids[ groups == 1, , drop=FALSE]
-  resids.case      = resids[ groups == 2, , drop=FALSE]
+  resids.control   = resids[ groups == 1, , drop=FALSE ]
+  resids.case      = resids[ groups == 2, , drop=FALSE ]
   resids.control.2 = resids.control ^ 2
   resids.case.2    = resids.case    ^ 2
   sse.control      = apply( resids.control.2 , 2, sum )
@@ -150,53 +179,28 @@ lrcde <- function(het.sub,
   mse.control      = sse.control / ( n.control - n.cells )
   mse.case         = sse.case    / ( n.case    - n.cells )
 
-  mse.control.frame = data.frame( as.character(names(mse.control)), mse.control, stringsAsFactors = F  )
-  mse.case.frame    = data.frame( as.character(names(mse.case)), mse.case, stringsAsFactors = F)
-  colnames(mse.control.frame) = c("site", "mse.control")
-  colnames(mse.case.frame)    = c("site", "mse.case")
+  mse.control.frame = data.frame( as.character(colnames(het.sub)), mse.control, stringsAsFactors = F )
+  mse.case.frame    = data.frame( as.character(colnames(het.sub)), mse.case   , stringsAsFactors = F )
+  colnames(mse.control.frame) = c( "site", "mse.control" )
+  colnames(mse.case.frame)    = c( "site", "mse.case"    )
   ###########################################################################
-
-  ###############################################################################
-  # Do power analysis:
-  power.list = do.decon.power( decon.list, groups, direction, nonNeg )
-  # power.list = list( power, diffs,  diff.critical, base.expr, case.expr, do.not.trust.these, deconv, tail.95.1 )
-  ###############################################################################
 
   #############################################################################
   # Assemble data.frame for output:
-  # power           = power.list[[1]]
-  # diffs           = power.list[[2]]
-  # diff.critical   = power.list[[3]]
-  # base.expr       = power.list[[4]]
-  # case.expr       = power.list[[5]]
-  # do.not.trust    = power.list[[6]]
-  # deconv          = power.list[[7]]
-  # tail.95.1       = power.list[[8]]
 
-  power.t  = as.data.frame(t( power.list[[1]] ))
-  diffs.t  = as.data.frame(t( power.list[[2]] ))
-  crit.t   = as.data.frame(t( power.list[[3]] ))
-  base.t   = as.data.frame(t( power.list[[4]] ))
-  case.t   = as.data.frame(t( power.list[[5]] ))
-  # do.not.t = as.data.frame(t( ! power.list[[6]] )) # Inverting boolean here to be intuitive: trust=TRUE means power > .5 likely.
-  tail.1   = as.data.frame(t( power.list[[8]] ))
+  deconv = decon.list[[3]]
+  cell.expr.ests.1 = deconv[[ 1 ]]$coefficients   # Cell-type specific expression estimates from group 1
+  cell.expr.ests.2 = deconv[[ 2 ]]$coefficients   # Cell-type specific expression estimates from group 2
+  
+  base.t   = as.data.frame(t( cell.expr.ests.1 ))
+  case.t   = as.data.frame(t( cell.expr.ests.2 ))
 
-  # if(dim(het.sub)[2] > 1){
-  #   power.t = t(power.t)
-  #   diffs.t = t(diffs.t)
-  #   crit.t  = t(crit.t)
-  #   base.t  = t(base.t)
-  #   case.t  = t(case.t)
-  #   tail.1  = t(tail.1)
-  # }
-
-  power.t$site  = rownames( power.t  )
+  colnames(base.t) = colnames(diffs.t)
+  colnames(case.t) = colnames(diffs.t)
+  
   diffs.t$site  = rownames( diffs.t  )
-  crit.t$site   = rownames( crit.t   )
   base.t$site   = rownames( base.t   )
   case.t$site   = rownames( case.t   )
-  # do.not.t$site = rownames( do.not.t )
-  tail.1$site   = rownames( tail.1   )
 
   cell.names = colnames(cell.props)
   numcells   = length(cell.names)
@@ -206,38 +210,25 @@ lrcde <- function(het.sub,
     tmp.frame = data.frame()
     cell.name = cell.names[p]
 
-    text2parse = paste0("power.tmp = subset(power.t, select=c( site ,", cell.name ," ))" )
-    eval(parse(text=text2parse));
-    colnames(power.tmp) = c( "site", "power")
+
     text2parse = paste0("diffs.tmp = subset(diffs.t, select=c(", cell.name ,", site ))")
     eval(parse(text=text2parse));
     colnames(diffs.tmp) = c("diff.est", "site")
 
-    text2parse = paste0("tail.tmp = subset(tail.1, select=c(", cell.name ,", site ))")
-    eval(parse(text=text2parse));
-    colnames(tail.tmp) = c("95.tail.1", "site")
 
-    text2parse = paste0("crit.tmp = subset(crit.t, select=c(", cell.name ,", site ))")
-    eval(parse(text=text2parse));
-    colnames(crit.tmp) = c("crit.dif", "site")
     text2parse = paste0("base.tmp = subset(base.t, select=c( site , ", cell.name ,"  ))")
     eval(parse(text=text2parse));
     colnames(base.tmp) = c( "site", "base")
+    
     text2parse = paste0("case.tmp = subset(case.t, select=c(", cell.name ,", site ))")
     eval(parse(text=text2parse));
     colnames(case.tmp) = c("case", "site")
-    # text2parse = paste0("do.not.tmp = subset(do.not.t, select=c(", cell.name ,", site ))")
-    # eval(parse(text=text2parse));
-    # colnames(do.not.tmp) = c("trust", "site")
-
+    
+    
     tmp.frame = dplyr::left_join( base.tmp   , case.tmp          , by="site" )
     tmp.frame = dplyr::left_join( tmp.frame  , diffs.tmp         , by="site" )
-    tmp.frame = dplyr::left_join( tmp.frame  , tail.tmp          , by="site" )
-    tmp.frame = dplyr::left_join( tmp.frame  , crit.tmp          , by="site" )
     tmp.frame = dplyr::left_join( tmp.frame  , mse.control.frame , by="site" )
     tmp.frame = dplyr::left_join( tmp.frame  , mse.case.frame    , by="site" )
-    tmp.frame = dplyr::left_join( tmp.frame  , power.tmp         , by="site" )
-    # tmp.frame = dplyr::left_join( tmp.frame  , do.not.tmp        , by="site" )
     tmp.frame$cell    = cell.name
 
     cat("cell name: ", cell.name, "\n")
@@ -251,6 +242,19 @@ lrcde <- function(het.sub,
   #############################################################################
 
   #############################################################################
+  # Output t-statistic results:
+  for(j in 1:length(p.val.t.out)){
+    if( p.val.t.out[j] > alpha.half ){
+      power.t.out[j] = p.val.t.out[j]
+    }
+  }
+  
+  old.names = colnames(total.frame)
+  total.frame = cbind(total.frame, t.crit.out, t.stats.out, p.val.t.out, se1.out, se2.out, se.welches.out, power.t.out )
+  colnames(total.frame) = c(old.names, "t.crit", "t.stat", "p.val.t" , "se1", "se2", "se.p", "t.power")
+  #############################################################################
+
+  #############################################################################
   # Write total.frame to .CSV file
   unlink(output.file) # Delete, if file exists
   write.csv(total.frame, file = output.file, row.names = FALSE)
@@ -259,8 +263,6 @@ lrcde <- function(het.sub,
   #############################################################################
   # Package the return list object:
   args.used = list(output.file,
-                   medCntr,
-                   stdz,
                    nonNeg,
                    method,
                    direction)
@@ -268,7 +270,4 @@ lrcde <- function(het.sub,
   return.list = list( total.frame, args.used )
   return( return.list )
   #############################################################################
-  # } # If output.dir ! exists
-
-#  } # output file exists
 } # End LRCDE

@@ -14,13 +14,15 @@
 #' @examples
 #' custom.resids.synthetic( mse2model.vec, groups, diff.2.model.vec, base.expr.vec, adjuster=1  )
 
-custom.resids.synthetic <- function( mse2model.vec, groups, diff.2.model.vec, base.expr.vec, adjuster=1 )
+custom.resids.synthetic <- function( mse2model.vec, groups, diff.2.model.vec, base.expr.vec, adjuster=1, n.cells )
 {
   ###########################################################################
   n = group.wise.sample.size( groups );
   n.controls = n[1];
   n.cases    = n[2];
+  n.samps = n.controls + n.cases
   ###########################################################################
+  
 
   # Convert mses to sds:
   sd.2.model = (sqrt( mse2model.vec) / ( n.samps-n.cells ) ) * adjuster;
