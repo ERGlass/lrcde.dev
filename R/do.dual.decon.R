@@ -21,7 +21,8 @@
 
 do.dual.decon <- function( het.sub, cell.props, groups, medCntr, stdz, nonNeg  )
 {
-
+  options(stringsAsFactors = FALSE)
+  
   ###########################################################################
   unique.groups = unique( groups )
   n = group.wise.sample.size( groups )
