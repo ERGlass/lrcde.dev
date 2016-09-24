@@ -12,7 +12,7 @@ I recommend installing the package "knitr" in order to build the vignettes conta
 
 Just issue the following command:
 ```{r}
-install_github("ERGlass/lrcde.dev", build_vignettes=TRUE)
+devtools::install_github("ERGlass/lrcde.dev", build_vignettes=TRUE)
 ```
 
 Note that LRCDE depends upon the dplyr and pROC packages.
