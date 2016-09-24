@@ -267,7 +267,7 @@ lrcde <- function(  het.sub,
                    method,
                    direction)
 
-  return.list = list( total.frame, args.used )
+  return.list = list( total.frame, args.used, decon.list )
   return( return.list )
   #############################################################################
 } # End LRCDE
