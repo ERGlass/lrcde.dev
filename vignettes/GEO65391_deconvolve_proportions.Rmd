@@ -12,12 +12,12 @@ vignette: >
 
 ## Cell Proportion Deconvolution
 
-Cell proportions can be estimated (deconvolved) given heterogenoeus measures and cell signatures.
+Cell proportions can be estimated (deconvolved) given heterogeneous measures and cell signatures.
 
 The following code chunk will load 996 samples on 43,799 illumina labels.  Phenotypic data will also be loaded and used to correct for batch effects.
 Also the sample labels between heterogeneous measures and phenotypic data will be aligned.
-```{r, eval=FALSE, results="hide"}
 
+```{r, eval=FALSE, results="hide"}
 # NOTE: LM22.txt will be loaded from package data.
 
 library(lrcde)
@@ -27,146 +27,160 @@ library(openxlsx)
 library( Biobase )
 library(dplyr)
 
-# Open GEO files:
+# Prepare a matrix of heterogeneous gene expression
 # Download the 'series' (GSE) and put it into an ExpressionSet object:
 # https://www.bioconductor.org/packages/3.3/bioc/vignettes/GEOquery/inst/doc/GEOquery.html#datasets
+gse <- "GSE65391" # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE65391
+
+# Make a folder for downloaded data, if not exist
+if (!file.exists(gse)) {
+  dir.create(gse)
+}
 # Getting GSE Series Matrix files as an ExpressionSet:
-GSE65391 = getGEO( 'GSE65391' , GSEMatrix = TRUE )
+gse.es <- getGEO(gse, GSEMatrix = TRUE, destdir = gse)
+# Or load previously downloaded data
+# gse.es <- getGEO(gse, filename = paste0(gse, "/", gse, "_series_matrix.txt.gz"), GSEMatrix = TRUE, destdir = gse)
+
 # Getting all phenotypic data:
-group.tags = pData( phenoData(GSE65391[[1]]) )
+group.tags <- pData(phenoData(gse.es[[1]]))
 # Subsetting the phenotypic data:
-sub.pheno <- subset(group.tags, select=c(characteristics_ch1.10, characteristics_ch1, characteristics_ch1.11, characteristics_ch1.12, characteristics_ch1.13) )
+sub.pheno <- subset(group.tags, select = c(characteristics_ch1.10, characteristics_ch1, characteristics_ch1.11, characteristics_ch1.12, characteristics_ch1.13))
 # Cleanup column names:
-colnames( sub.pheno ) = c("state", "batch", "gender", "race", "age" )
-# Binarize gender:
-sub.pheno$gender = ifelse( sub.pheno$gender == "F", 0, 1 )
+colnames(sub.pheno) <- c("state", "batch", "gender", "race", "age" )
+# Factorize gender
+sub.pheno$gender = factor(sub.pheno$gender)
 # Get the actual heterogenous expression matrix:
-G = t( exprs( GSE65391[[1]] ) )
+G = t(exprs(gse.es[[1]]))
 
 # Need to line up the sample labels:
-all.equal( rownames(sub.pheno), rownames(G) ) # [1] "337 string mismatches"
-pheno.control = sub.pheno[ sub.pheno$state == "disease state: Healthy", ]
-pheno.case    = sub.pheno[ sub.pheno$state == "disease state: SLE"    , ]
+all.equal( rownames(sub.pheno), rownames(G) ) # Should be TRUE
+pheno.control <- sub.pheno[sub.pheno$state == "disease state: Healthy", ]
+pheno.case    <- sub.pheno[sub.pheno$state == "disease state: SLE"    , ]
 
-control.names = rownames(pheno.control)
-case.names    = rownames(pheno.case)
+control.names <- rownames(pheno.control)
+case.names    <- rownames(pheno.case)
 
-G.control = G[ rownames(G) %in% control.names , ]
-G.case    = G[ rownames(G) %in% case.names , ]
+G.control <- G[rownames(G) %in% control.names, ]
+G.case    <- G[rownames(G) %in% case.names   , ]
 
-n.control = dim( G.control )[1]                    # 72 "controls""
-n.case    = dim( G.case    )[1]                    # 924 "cases" (several longitudinal measures)
+n.control <- dim(G.control)[1]                    # 72 "controls""
+n.case    <- dim(G.case   )[1]                    # 924 "cases" (several longitudinal measures)
 
-G = rbind(G.control, G.case)
-pheno = rbind( pheno.control, pheno.case )
+G     <- rbind(G.control, G.case)
+pheno <- rbind( pheno.control, pheno.case )
 
 # Now sample labels align:
-all.equal( rownames(pheno), rownames(G) ) # TRUE
+all.equal(rownames(pheno), rownames(G)) # TRUE
 
 # Now create cases and controls group membership vector (half and half):
 groups  = c( rep(1, n.control), rep(2, n.case ) )
-###############################################################################
 ```
 
 ## Adjust Batch Effects
+
 Now that data is loaded, we will adjust the heterogenous expressions for batch effects.
+
 ```{r, eval=FALSE, results="hide"}
-###############################################################################
 # Adjust heterogeneous expression (G) for batch effect:
 
 edata = t(G)     # The ComBat function expects G to be sites by samples (samples as columns)
-
 batch1 = pheno$batch        # Just the categorical batch effects we care about.
-
 modcombat.1 = model.matrix(~1 + as.numeric(pheno$age) + gender + race , data=pheno)    # Create "design matrix", only fitting intercept term.
-
 combat_edata  = ComBat( dat=edata , batch=batch1, mod=modcombat.1, par.prior=TRUE, prior.plots=FALSE )  # Handles 'batch' and 'age'.
 
-dim(edata)
-dim(combat_edata)
-
-for(i in 1:dim(combat_edata)[2]){
-  cat("samp: ", i, "  with cor: ", cor(edata[,i], combat_edata[,i]) , "\n") # 996 lines with correlations: comparing "sample A" to "sample A".
-}
+# # Sanity check - dimensions should be the same
+# dim(edata)
+# dim(combat_edata)
+# # The data should be relatively similar
+# for(i in 1:dim(combat_edata)[2]){
+#   cat("samp: ", i, "  with cor: ", cor(edata[,i], combat_edata[,i]) , "\n") # 996 lines with correlations: comparing "sample A" to "sample A".
+# }
 
 G = t(combat_edata)  # This is the new heterogeneous matrix adjusted for: 'batch', 'gender', 'race', and 'age'.
-dim(G)                 # 996 by 43799 (samples by sites)
+dim(G)               # 996 by 43799 (samples by sites)
 
-G.original = G    # <- THIS is the heterogeneous matrix that we will "deconvolve" AFTER we have estimated cell proportions from the reduced set of sites in the cell signatures.
-###############################################################################
+G.original = G       # <- THIS is the heterogeneous matrix that we will "deconvolve" AFTER we have estimated cell proportions from the reduced set of sites in the cell signatures.
 ```
 
 ## Load Cell Signatures
+
 Now that data has been loaded and adjusted for batch effects, we will load the cell signatures.
 The cell signatures (LM22) contain only 547 gene labels on 22 cell types.
 As loaded, the first column of LM22 contains the actual Gene Labels.
 
 Since the 996 samples of heterogneous measures are provided as Illumina IDs, we must convert Illumina IDs to gene labels and then take a subset of the heterogneous gene labels which are actually found in the LM22 list (of gene labels).
-```{r, eval=FALSE, results="hide"}
 
-# Load cell signatures (profiles: LM22 data):
+```{r, eval=FALSE, results="hide"}
+# Load cell signatures (profiles: LM22 data)
 # LM22 = read.csv("LM22.txt", header = TRUE, sep ="\t", stringsAsFactors = FALSE )
-# The following line loads the LM22 blood cell signatures, included in the package:
+# Loads the LM22 object with blood cell signatures, included in the package:
 data("blood.cell.signatures") # Included in the LRCDE function
-# NOTE: LM22 are the blood.cell.signatures
+# Courtesy to Aaron Newman and Cibersort, https://cibersort.stanford.edu/
 
 # Convert ILMN ids to gene labels:
-illumina.ids = colnames( G )
+illumina.ids <- colnames(G)
 library("illuminaHumanv4.db")
-genes = data.frame( Gene = unlist(mget( x = illumina.ids ,envir = illuminaHumanv4SYMBOL)))
+genes <- data.frame(Gene = unlist(mget(x = illumina.ids, envir = illuminaHumanv4SYMBOL)))
 genes$ilmn.ids = rownames(genes)
 
 g.t = as.data.frame(t(G))
-g.t$ilmn.ids = rownames(g.t)
-g.t.genes = left_join( genes, g.t )  # Join the matching gene labels with the ILMN ids in the G matrix BY ILMN ids.
-g.t.clean = g.t.genes[ !is.na(g.t.genes$Gene) , ]   # Eliminate rows with <NA>s as Gene labels
-g.t.clean = subset(g.t.clean, select=-c(ilmn.ids))  # Drop ilmn ids column
+g.t$ilmn.ids <- rownames(g.t)
+g.t.genes    <- left_join(genes, g.t)                   # Join the matching gene labels with the ILMN ids in the G matrix BY ILMN ids.
+g.t.clean    <- g.t.genes[!is.na(g.t.genes$Gene), ]     # Eliminate rows with <NA>s as Gene labels
+g.t.clean    <- subset(g.t.clean, select = -c(ilmn.ids))  # Drop ilmn ids column
 
 # Only keep genes in G that are also in LM22:
-g.t.stub = g.t.clean[ g.t.clean$Gene %in% LM22$Gene.symbol , ]
+g.t.stub <- g.t.clean[g.t.clean$Gene %in% LM22$Gene.symbol, ]
 dim(g.t.stub)                         # 759
 
+genes.2.aggregate <- g.t.stub$Gene
+g.stub            <- subset(g.t.stub, select = -c(Gene))
+g.t.unique        <- aggregate(g.stub, list(Gene = genes.2.aggregate), median) # Runs for half a minute
 
-genes.2.aggregate = g.t.stub$Gene
-g.stub = subset(g.t.stub, select=-c(Gene))
-g.t.unique = aggregate( g.stub, list(Gene=genes.2.aggregate), median) # Runs for half a minute
+lm.stub = LM22[LM22$Gene.symbol %in% g.t.unique$Gene, ]  # Keep the SAME unique Gene labels that are in G matrix.
 
-lm.stub = LM22[ LM22$Gene.symbol %in% g.t.unique$Gene , ]  # Keep the SAME unique Gene labels that are in G matrix.
+colnames(lm.stub)[1] <- "Gene"
+rownames(lm.stub)    <- lm.stub$Gene
 
-colnames(lm.stub)[1] = "Gene"
-rownames(lm.stub) = lm.stub$Gene
-
-g.t.ord = g.t.unique[  order(g.t.unique$Gene),  ]   # Order rows by gene labels
-rownames(g.t.ord) = g.t.ord$Gene
-lm.ord = lm.stub[ order(lm.stub$Gene), ]            # Order rows by gene labels
+g.t.ord              <- g.t.unique[order(g.t.unique$Gene), ]   # Order rows by gene labels
+rownames(g.t.ord)    <- g.t.ord$Gene
+lm.ord               <- lm.stub[ order(lm.stub$Gene), ]        # Order rows by gene labels
 
 # DO THEY MATCH?
-all.equal( as.character( g.t.ord$Gene ), as.character( lm.stub$Gene ) ) # TRUE
+all.equal(as.character(g.t.ord$Gene), as.character(lm.stub$Gene)) # TRUE
 
-G         = t(  subset( g.t.ord , select=-c(Gene) ))
-cell.sigs = t(  subset( lm.ord  , select=-c(Gene) ))
-###############################################################################
+G         <- t(subset(g.t.ord, select = -c(Gene)))
+cell.sigs <- t(subset(lm.ord , select = -c(Gene)))
 ```
 
 ## Deconvolve Cell Proportions
+
 Now that the heterogeneous measures have been converted from Illumina IDs into gene labels and subset so that only the gene labels which are also in the cell signatures (LM22) are included, we can proceed to deconvolve the cell proportions.
 
 This is a simple linear regression using the cell signatures as predictors.  The resulting coefficient estimates are taken as surrogates for the estimated cell proportions.
+
 ```{r, eval=FALSE, results="hide"}
-###############################################################################
 # Convert signatures to log2 space (since the heterogeneous measures have obviously been log transformed:
-cell.sigs = log2( cell.sigs + 1 )
-###############################################################################
+cell.sigs <- log2(cell.sigs + 1)
 
-###############################################################################
 # Now deconvolve cell proportions (should have an sample by cell type matrix):
-fit = lm( t(G) ~ 0 + t( cell.sigs ) )  # Through the origin.  Otherwise there is an intercept term with what biological meaning?
-
+fit <- lm(t(G) ~ 0 + t(cell.sigs))  # Through the origin.  Otherwise there is an intercept term with what biological meaning?
 cell.props = t(fit$coefficients)
+all.equal(rownames(cell.props), rownames(G)) # TRUE # Sample names align.
 
-all.equal( rownames( cell.props ), rownames( G )) # TRUE # Sample names align.
-###############################################################################
-###############################################################################
+# Or use the 'decon.cell.props' function from the package
+cell.props.1 <- decon.cell.props(G, cell.sigs)
 ```
 
-The resulting cell proportions can now be used in a further deconvolution step to perform LRCDE analysis.
+The resulting cell proportions can now be used in a further deconvolution step to perform LRCDE analysis. We save some data for future analysis
+
+```{r eval=FALSE, results='hide'}
+all.equal(rownames(pheno), rownames(G)) # Check if phenodata still the same orded
+# Use first 150 patients, 72 healthy, 78 diseased
+het.mtx    <- G[1:150, ]
+het.pheno  <- pheno$state[1:150]
+cell.props <- decon.cell.props(het.mtx, cell.sigs)
+# Save demo data
+save(file="data/lrcde.demo.RData", list=c("het.mtx", "het.pheno", "cell.props", "cell.sigs"))
+```
+
