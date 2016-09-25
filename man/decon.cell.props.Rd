@@ -4,24 +4,35 @@
 \alias{decon.cell.props}
 \title{decon.cell.props}
 \usage{
-decon.cell.props(het.sub, cell.sigs, LOGGED)
+decon.cell.props(het.sub, cell.sigs)
 }
 \arguments{
-\item{het.sub}{Should be samples by genomic site (rows by columns).  The samples by genomic measures heterogeneous observations matrix.}
+\item{het.sub}{Heterogeneous gene expression matrix, _n_ samples by _m_ genes 
+(rows by columns). Required. Note that only a subset of heterogeneous measres
+is used, with the same number and order of genes as in the cell signature matrix}
 
-\item{cell.sigs}{Should be cell types by genes (rows by columns).}
-
-\item{LOGGED}{A boolean indicating whether the heterogeneous observations have been log transformed.}
+\item{cell.sigs}{Cell-specific gene expression signatures, _p_ cell types by 
+_m_ genes (rows by columns). Required. Note that both heterogeneous matrix and 
+cell signature matrix should be on the same scale, log2 or decimal}
 }
 \value{
-cell.props The deconvolved (estimated cell proportions)
+Estimated cell proportions, _n_ samples by _m_ cell types (rows by columns)
 }
 \description{
 Call this function to estimate cell proportions given hetergenous expressions and cell signatures.
 }
 \details{
-decon.cell.props is an auxillary function meant to be called directly by user in order to estimate cell proportions given generic cell gene signatures.
+decon.cell.props is an auxillary function meant to be called directly by user in order to estimate cell proportions given cell gene signatures.
 This assumes that G and cell.sigs have been previously made conformal with identical gene names/labels.
+}
+\examples{
+
+\dontrun{
+# Loads the heterogeneous matrix (subset) and cell signatures
+data("lrcde.demo") # Included in the LRCDE function
+# Estimate cell proportions. 
+cell.props <- decon.cell.props(het.mtx, cell.sigs)
+}
 }
 \author{
 Edmund R Glass, \email{Edmund.Glass@gmail.com}, Mikhail G Dozmorov, \email{Mikhail.Dozmorov@vcuhealth.org}
