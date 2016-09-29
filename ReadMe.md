@@ -47,6 +47,6 @@ Type:
  browseVignettes('lrcde')
 ```
 
-Read the "Using LRCDE" vignette and use the code examples to run your own quick simulation.
+Read the "[Using LRCDE](vignettes/using_lrcde.Rmd)" vignette and use the code examples to run your own quick simulation.
 
 The "LRCDE Permutations for AUC Variability" is a more elaborate demonstration.  Caution: The permutations will take about 20 minutes or so to run. This is the code which demonstrates AUROC variability when condition number (kappa) of the cell proportions predictor matrix is very high. The plotting facility in the permutations vignette depends upon the package `Hmisc`.
