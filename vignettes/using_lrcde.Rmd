@@ -1,6 +1,6 @@
 ---
 title: "Using LRCDE"
-author: "Edmund R Glass"
+author: "Edmund R. Glass, Mikhail G. Dozmorov"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -9,163 +9,156 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-LRCDE is a linear regression deconvolution package.  It is designed to do the following:
+`lrcde` is a linear regression deconvolution package.  It is designed to do the following:
 
-* Cell type-specific differential expression estimation
-* output the observed power of each cell type-specific difference estimate
+* Detecting cell type-specific differentialy expressed genes from heterogeneous gene expression matrix and sample-specific cell proportions. The cell proportions may be estimated from cell type-specific expression signatures.
+* Calculating the observed power of each cell type-specific difference estimate
     * Very small observed differences _might_ be real... yet underpowered.
-* Allow simulation of cell proportions matrices with:
+* Simulating cell proportions matrices with:
     * desired level of variability (targeted standard deviation) across target cell 1
     * desired level of condition number across entire cell proportions matrix (for single study group)
-* Allow quick easy simulation of cell type-specific expression matrices
-* Allow simulation of heterogeneous observations with targeted level residual variability (MSE target)
+* Simulating cell type-specific expression matrices
+* Simulating heterogeneous observations with targeted level residual variability (means squared error, MSE, target)
+* Obtaining cell proportions based on cell type-specific expression signatures
 
-The following steps allow for testing of the simulation facilities and the lrcde function.
+## Real life example
 
-## Initial setup
+See example on `?lrcde` help page
 
-You must start by declaring the working directory where a .CSV output file will be written.
+## Simulation example
 
-Then you declare a few parameter values for the simulation functions to use.
+### Parameters of simulations
+
+First, we set up simulation parameters to create heterogeneous gene expression matrix with two groups (e.g., case-control study). To create heterogeneous gene expression matrix, we need to simulate:
+
+* cell type-specific gene expression estimates, 
+* the corresponding cell proportions,
+* a vector of group assignment.
+
+The heterogeneous gene expression matrix is then represented by a linear combination of cell type-specific expressions weighted by the corresponding cell proportions. The heterogeneous gene expression matrix should be simulated for both l
+
+As the cell type-specific gene expression estimates carry a level of uncertainty, we need to simulate 
+
+* variability of the residuals around the estimates given certain mean squared error threshold.
+
+To establish "gold standard" cell type-specific gene expression differences, we need to introduce controlled differences in one of the cell type. These controlled differences will be used to calculate power of cell type-specific gene expression detection.
 
 ```{r, eval=FALSE, results="hide"}
 library(lrcde) # Load the lrcde package
-
 # setwd("/home/your.user.name/output.directory") # change this to suit your own setup and preferences
 
-# Custom parameters to model:
+# We are comparing two groups for cell type-specific gene expression differences
+n.samps         <- 15 # Sample size per group.  
+# Mean Squared Error to model variability around cell type-specific gene expression estimates
+# Actual average MSE per gene will be smaller
+mse2model.vec   <- c(0.05)
 
-    n.samps = 15 # Sample size per group
-    # Mean Squared Error to model (actual average MSE per gene will be a small fraction of this)
-     mse2model.vec  = c( 0.05)
-     
-# Cell proportion parameterss to model:
-    # Target cell standard deviation (across samples) to model:
-    cell.sd.2.model = c( 0.08 )
-    # Condition number (kappa) to target (resulting kappa will be approximate):
-    kappa.2.model  = c( 71500 )
-    # Number of cells to simulate:
-    n.cells  = c( 3 )
-    # The "target" cell (the one with the fold change) for simulations
-    cell.p = 1
+# Cell proportion parameters to model
+# Standard deviation of cell type-specific proportions (across samples).
+# Only for the cell type used to model differential expression in (the "target" cell type)
+cell.sd.2.model <- c(0.08) # Estimated from real data
+# Condition number (kappa) for the cell proportion matrix (resulting kappa will be approximate):
+kappa.2.model   <- c(71500) # Estimated from real data
+# Number of cell types to simulate:
+n.cells         <- c(3) # Should be at least 2
+# Index of the "target" cell type (the one with the fold change) for simulations
+cell.p          <- 1
 
 # Cell expression params to model:
-
-    # Base level cell expressions to model:
-    base.expr.vec    = c( 2  )
-    # Cell level differential expression to model:
-    diff.2.model.vec = c( 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, .1)
-
+# Base level cell expressions to model:
+base.expr.vec    <- c(2) # Decimal scale
+# Cell type-specific absolute differences between cell type-specific gene expression estimates to model:
+diff.2.model.vec <- c( 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, .1)
 ```
-As you can see, there will be 10 different effect-sizes models.  Since only a single mean squared error (MSE) is being modeled, then there will be a simulated heterogeneous matrix with only 10 features modeled.
 
+As you can see, there will be 10 different effect-size models. Since only a single mean squared error (MSE) is being modeled, then there will be a simulated heterogeneous matrix with only 10 features modeled.
 
-## Data Simulation
+### Data Simulation
 
 Once paramters have been declared, you may simulate data.
 
 ```{r, eval=FALSE, results="hide"}
-###############################################################################
-# Simulate data:
-    
 # For the sake of reproducibility, you should set a seed:
-seed2set = (11221963)
+seed2set <- (11221963)
 
-# Group indicator vector (group membership indicator - should NOT be a factor here!):
-groups = c(rep(1,n.samps), rep(2,n.samps) )
+# Group membership indicator vector (numeric, not factor):
+groups <- c(rep(1, n.samps), rep(2, n.samps))
 
 # Now simulate cell proportions (note use of set.seed):
 set.seed(seed2set)
-cell.props.1 = cell.props.target( n.cells             # Number of cells to simulate
-                                , n.samps           # Number of samples (per group) to simulate
-                                , cell.sd.2.model   # Standard deviation of target cell
-                                , kappa.2.model )   # Condition number of cell.props (per group)
-
+cell.props.1 <- cell.props.target(n.cells,          # Number of cells to simulate
+                                  n.samps,          # Number of samples (per group) to simulate
+                                  cell.sd.2.model,  # Standard deviation of target cell
+                                  kappa.2.model)    # Condition number of cell.props (per group)
 # How did the cell proportions turned out ?:
-apply(cell.props.1, 2, sd)                          # Standard deviation of target cell (cell.p)
-kappa(t(cell.props.1)%*%cell.props.1, exact=TRUE)   # actual kappa (condition number)
+apply(cell.props.1, 2, sd)  # Standard deviation of target cell (cell.p)
+kappa(t(cell.props.1) %*% cell.props.1, exact = TRUE)  # actual kappa (condition number)
 
-# Stack control and cases (identical) cell proportions:    
-cell.props = rbind( cell.props.1, cell.props.1 )
+# Stack control and cases (identical) cell proportions:
+cell.props <- rbind(cell.props.1, cell.props.1)
 
-# Sim cell level expression (gold-standard).
-cell.expr = custom.sim.cell.expr(   n.cells           # Number of cell types being simulated
-                                  , base.expr.vec     # The "base" expression level to model
-                                  , diff.2.model.vec  # Differential expression to model
-                                  , cell.p            # Target cell to modify in cases
-                                  , length( mse2model.vec ) )
+# Simulate cell level expression (gold-standard).
+cell.expr <- custom.sim.cell.expr(n.cells,           # Number of cell types being simulated
+                                  base.expr.vec,     # The 'base' expression level to model
+                                  diff.2.model.vec,  # Differential expression to model
+                                  cell.p,            # Target cell to modify in cases
+                                  length(mse2model.vec))
 
-# Sim residuals:
+# Simulate residuals:
 set.seed(seed2set)
-resids = custom.resids.synthetic(    mse2model.vec    # Actual MSE will be small fraction of this
-                                   , groups           # groups vector
-                                   , diff.2.model.vec # Included to get matrix size correct
-                                   , base.expr.vec    # Included to get matrix size correct
-                                   , adjuster=1
-                                   , n.cells )     # Scaling factor for MSE target
+resids <- custom.resids.synthetic(mse2model.vec,     # Actual MSE will be small fraction of this
+                                  groups,            # groups vector
+                                  diff.2.model.vec,  # Included to get matrix size correct
+                                  base.expr.vec,     # Included to get matrix size correct
+                                  adjuster = 1,      # Scaling factor for MSE target
+                                  n.cells)
+# Simulate heterogeneous expression=:
+het.obs <- het.from.synthetic(cell.props,            # The entire cell proportions matrix
+                              cell.expr,             # Cell type-specific expressions matrix
+                              resids,                # Simulated residuals matrix
+                              groups)                # groups membership vector
 
-# Sim het obs:
-het.obs = het.from.synthetic(   cell.props     # The entire cell proportions matrix
-                              , cell.expr      # Cell type-specific expressions matrix
-                              , resids         # Simulated residuals matrix
-                              , groups )       # groups membership vector
-
-colnames( het.obs ) = 1:dim( het.obs )[2]         # LRCDE expects to see feature names
-colnames( cell.props ) = 1:dim( cell.props )[2]   # LRCDE expects to see cell type names
+colnames(het.obs) <- 1:dim(het.obs)[2]               # LRCDE expects to see feature names
+colnames(cell.props) <- 1:dim(cell.props)[2]         # LRCDE expects to see cell type names
 ```
 
-Congratualtions!  You just simulated some data.
+Congratualtions! You simualted data is ready.
 
+### Running the LRCDE function
 
-## Running the LRCDE function
+Using the data that you just simulated, you can now call the `lrcde` function.
 
-Using the data that you just simulated, you now call the lrcde function.  The main function in the LRCDE package.
+The following three parameter will automatically default to the following values if undeclared in the call to `lrcde`.
 
-The following three parameter will automatically default to the following values if undeclared in the call to lrcde.
-The values shown below are the recommended settings.
+The `method2use` option defines the type of linear regression used to detect cell type-specific differential expression. The default is 'dual', perform linear regression separately for the two groups (the only method currently implemented).
 
-DO NOT standardize or median center differential expression estiamtes when using LRCDE... In fact, I should remove these features from the code.
+Specify the name of your output file (with the .csv extension).
+
+The `alternative` option defines the type of hypothesis testing. Can be one of 'two.sided', 'greater', or 'less'.  Default is 'two.sided', recommended.
 
 ```{r, eval=FALSE, results="hide"}
-    ###############################################################################
-    # Use these for LRCDE since power calculation is meaningless if
-    #      differences are transformed but standard errors are not:
-    stdz=FALSE; medCntr=FALSE; nonNeg=TRUE
-    ###############################################################################
+method2use        <- "dual"                          # Which type of deconvolution to run (dual is only thing implemented)
+lrcde.output.file <- paste0("lrcde_sim_example.csv") # File name to save the results
+alternative       <- 'two.sided'                     # One of "two.sided", "greater", or "less"
+
+# Run LRCDE:
+return.list <- lrcde(het.obs, 
+                     cell.props, 
+                     groups,
+                     output.file = lrcde.output.file,
+                     method      = method2use,
+                     direction   = alternative)
 ```
 
-The 'method to use' will default to 'dual' since this is the only method implemented.
+During run, the `lrcde` function will output each cell type name after it has finished analyzing all of the features across that cell type.
 
-It is good to specically declare the name of your output file (leave the .csv extension).
-
-The 'alternative' can be one of 'two.sided', 'greater', or 'less'.  Default is 'two.sided'.
-
-```{r, eval=FALSE, results="hide"}
-    method2use="dual" # Which type of deconvolution to run (dual is only thing implemented)
-
-    lrcde.output.file   = paste0( "lrcde_sim_example.csv"  )
-    alternative='two.sided' # One of "two.sided", "greater", or "less"
-
-    # Run LRCDE:
-    return.list = lrcde(  het.obs, cell.props, groups
-                          , output.file = lrcde.output.file
-                          , medCntr     = medCntr
-                          , stdz        = stdz
-                          , nonNeg      = nonNeg
-                          , method      = method2use
-                          , direction   = alternative
-    )
-```
-
-The lrcde function will output each cell type name after it has finished analyzing all of the features across that cell type.
-
-The 'return.list' is a 2 item list.  Item 1 is a dataframe of results of the power analysis.  Item 2 is another list of the parameters and their values used in the call to lrcde
+The 'return.list' is a 2 item list.  Item 1 is a data.frame of results of the power analysis.  Item 2 is another list of the parameters and their values used in the call to `lrcde`
 
 Take a look at the output data frame for the 10 feature simulation that you just ran
 
 ```{r, eval=FALSE, results="hide"}
-    result.frame = return.list[[1]]
-    result.frame
+result.frame = return.list[[1]]
+result.frame
 ```
 
 Notice the 'power' column.  This has the observed power for the observed cell type-specific difference estimates.
@@ -174,5 +167,5 @@ Only the target cell (cell 1 here) will have significant power numbers.
 
 The features with the larget differences will have higher power (as it should be) since each feature has approximately the same MSE (residual sizes).
 
-Other vignettes include fancier examples.
+Check `?lrsde` for the column desctiprion
 
