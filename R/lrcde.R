@@ -1,24 +1,41 @@
 #' lrcde
 #'
-#' Call this function to run entire functionality of LRCDE.
+#' Cell type-specific differential expression detection given heterogeneous gene expression matrix,
+#' cell type-specific cell proportions, and a vector of group assignment (e.g., case-control study).
 #' @author Edmund R Glass, \email{Edmund.Glass@@gmail.com}, Mikhail G Dozmorov, \email{Mikhail.Dozmorov@@vcuhealth.org}
 #' @references \url{https://github.com/ERGlass/lrcde.dev}
-#' @param het.sub  Should be samples by genomic site (rows by columns).  The samples by genomic measures heterogeneous observations matrix.
-#' @param cell.props  Should be samples by cell types (rows by columns).  The relative cell proportions per sample.
-#' @param groups  A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.
-#' @param output.file file name to output the results. Default: LRCDE_power.analysis.csv.
-#' @param VERBOSE Boolean indicating whether to output progess indication to console.  Default is TRUE.
-#' @param medCntr Boolean indicating whether to mean center differential expression estimates.
-#' @param stdz Boolean indicatin whether to scale differential expression estimates with their pooled adjusted standard deviation
-#' @param nonNeg Boolean indicating whether to force cell type-specific estimates to be non-negative (TRUE) or not (FALSE).
-#' @param method Only "dual" is implemented in this version. This should be one of "dual" (csSAM method), or "ridge".  Default is "dual".  Specifies which type of regression deconvolution to perform.
-#' @param direction Should be one of "two.sided", "up", or "down".  Which direction to test for cell type-specific expression changes.
-#' @return List containing data.frame (total.frame) of analysis results and a list of parameter values supplied to lrcde function (arg.used).
+#' @param het.sub the samples (rows) by genes (columns) heterogeneous gene expression matrix.
+#' Should contain non-median-centered, non-standardized, positive values. log2-transformation recommended. Required
+#' @param cell.props the cell proportion matrix, cell types (rows) by samples (columns). 
+#' The proportion should be relative, e.g., sum up to ~1 per sample. Required
+#' @param groups a vector of 1's and 2's indicating group assignment. 
+#' Should correspond to the sample order in het.sub and cell.props. Required
+#' @param output.file file name to output the comma-separated results. Default: LRCDE_power.analysis.csv.
+#' @param VERBOSE boolean, whether to output progess to console. Default is TRUE.
+#' @param method cpecifies which type of regression deconvolution to perform. Only "dual" method (deconvolution of each group separately) 
+#' is implemented in the current version (default). Future methods may include "ridge" and/or "single".  
+#' @param direction the type of test to perform. Should be one of "two.sided" (default), "up", or "down".
+#' @return A list with three elements. The first contains a data.frame of analysis results.
+#' The second contains a list of parameters supplied to the lrcde function. 
 #' @keywords Deconvolution cell type-specific differential expression detection power analysis
 #' @details
-#' The lrcde function is meant to be called directly by user.  It is the entry point for the cell type-specific differential expression power analysis.
-#' This is mainly a wrapper script for the deconvolution step and subsequent call to power analysis function (do.decon.power).
-#' Default behavior is to write output to LRCDE_power.analysis.csv in the current working directory.
+#' Each row of the results data.frame contains cell type-specific differential expression analysis statistics.
+#' Each column contains:
+#' \describe{
+#'  \item{site}{gene index, each gene is tested for differential expression in each cell type}
+#'  \item{base}{cell type-specific gene expression estimate in _group 1_ (e.g., controls)}
+#'  \item{case}{cell type-specific gene expression estimate in _group 2_ (e.g., cases)}
+#'  \item{diff.est}{cell type-specific gene expression difference estimate. Larger differences are of interest, given sufficient power}
+#'  \item{mse.control/case}{cell type-specific mean squared error gene expression estimatefor group 1/2, respectively}
+#'  \item{cell}{cell type-specific index}
+#'  \item{cell.sd}{cell type-specific standard deviation across samples}
+#'  \item{kappa.1/2}{group-specific condition number for the cell proportion matrixes, for group 1/2, respectively}
+#'  \item{t.crit}{t-statistics cutoff to reject the null hypothesis of no cell type-specific differential expression}
+#'  \item{t.stat/p.val.t}{observed t-statistics/p-value, respectively, for the cell type-specific differential expression analysis. 
+#'  Not corrected for multiple testing. ToDo: use '1 - p' for negative diff.est}
+#'  \item{se.1/se.2}{standard error of the cell type-specific gene expression estimates for group 1/2, respectively}
+#'  \item{t.power}{power of the cell type-specific differential analysis. Non-siginficant power defaults to p.val.t, power at p.val.t < 0.05 indicates potentially significant cell type-specific differences. Larger power (> 0.8) corresponds to more significant differences.}
+#' }
 #' @export
 #' @examples
 #' \dontrun{
@@ -60,24 +77,22 @@
 #'                            groups, 
 #'                            output.file = "LRCDE_power_analysis_results.csv", 
 #'                            VERBOSE = TRUE, 
-#'                            medCntr = FALSE, 
-#'                            stdz = FALSE, 
-#'                            nonNeg = TRUE, 
 #'                            method = "dual", 
 #'                            direction = "two.sided")
 #' }
 
-lrcde <- function(  het.sub,
-                    cell.props,
-                    groups,
-                    output.file = "LRCDE_power_analysis.csv",
-                    VERBOSE     = TRUE,
-                    medCntr     = FALSE,
-                    stdz        = FALSE,
-                    nonNeg      = TRUE,
-                    method      = "dual",
-                    direction   = "two.sided") {
-
+lrcde <- function(het.sub,
+                  cell.props,
+                  groups,
+                  output.file = "LRCDE_power_analysis.csv",
+                  VERBOSE     = TRUE,
+                  method      = "dual",
+                  direction   = "two.sided") {
+# Default parameters kept for historical reason
+  medCntr     = FALSE
+  stdz        = FALSE
+  nonNeg      = TRUE
+  
   options(stringsAsFactors = FALSE)
   
   ###########################################################################
