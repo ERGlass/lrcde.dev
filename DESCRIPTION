@@ -2,7 +2,8 @@ Package: lrcde
 Title: Linear Regression Cell Type-Specific Differential Expression Power
     Analysis
 Version: 1.0.1.0000
-Authors@R: person("Edmund", "Glass", email = "Edmund.Glass@gmail.com", role = c("aut", "cre"))
+Authors@R: c(person("Edmund", "Glass", email = "Edmund.Glass@gmail.com", role = c("aut", "cre")),
+             person("Mikhail", "Dozmorov", email = "Mikhail.Dozmorov@gmail.com", role = c("aut", "ctb", "ths")))
 Description: Linear Regression Cell Type-Specific Differential Expression Power
     Analysis. Feeding lrcde a samples by genomic sites matrix of heterogeneous
     expression measures, cell proportions, and a group membership vector, then
