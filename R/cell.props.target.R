@@ -61,7 +61,7 @@ cell.props.target <- function(n.cells = 3, n.samps = 15, target.sd = 0.08, targe
       scale.tune = scale.tune * 1.001
     }
     
-    more.cells = matrix(, ncol=n.cells.minus.1, nrow=n.samps)
+    more.cells = matrix(ncol=n.cells.minus.1, nrow=n.samps)
     more.cells[,1] = cell.1
     for(r in 2:(n.cells.minus.1)) {
       more.cells[,r] = runif( n.samps , 0 , tot.rem * scale.tune )
