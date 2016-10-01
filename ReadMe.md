@@ -42,3 +42,4 @@ The "[LRCDE Permutations for AUC Variability](vignettes/lrcde.permutations_for_a
 ## Internal functions
 
 - `cell.props.target` - a function to simulate cell proportion matrix with pre-defined cell proportion standard deviation for the target cell type, and the condition number for the whole matrix
+- `custom.resid.synthetic` - a function to create a matrix of simulated residuals for each sample and cell type
