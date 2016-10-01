@@ -33,4 +33,5 @@ The "LRCDE Permutations for AUC Variability" is a more elaborate demonstration. 
 
 ## Functions
 
-- `lrcde` - main hunction to perform cell type-specific differential expression analysis.
+- `lrcde` - main function to perform cell type-specific differential expression analysis.
+- `decon.cell.props` - a function to estimate cell proportions given heterogeneous gene expression matrix and cell type-specific gene expression signatures.
