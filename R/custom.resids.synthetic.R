@@ -22,40 +22,43 @@
 #'                                   diff.2.model.vec = c(0.1, 0.5, 1), base.expr.vec = 10, adjuster = 1, n.cells = 3)
 #' }                                   
 
-custom.resids.synthetic <- function(mse2model.vec = 0.05, groups, diff.2.model.vec = c(0.1, 0.5, 1), base.expr.vec = 10, adjuster = 1, n.cells )
-{
-  ###########################################################################
-  n = group.wise.sample.size( groups );
-  n.controls = n[1];
-  n.cases    = n[2];
-  n.samps = n.controls + n.cases
-  ###########################################################################
-  
+custom.resids.synthetic <- function(mse2model.vec = 0.05, groups, diff.2.model.vec = c(0.1, 0.5, 1), base.expr.vec = 10, adjuster = 1, n.cells) {
+
+  n          <- group.wise.sample.size(groups)
+  n.controls <- n[1]
+  n.cases    <- n[2]
+  n.samps    <- n.controls + n.cases
 
   # Convert mses to sds:
-  sd.2.model = (sqrt( mse2model.vec) / ( n.samps-n.cells ) ) * adjuster;
-
-  basic.resids.2.model = matrix( rep(0, n.controls*length(mse2model.vec)), nrow = n.controls, ncol=length(mse2model.vec));
-
-  reps = length(base.expr.vec) * length(diff.2.model.vec)
+  sd.2.model <- (sqrt(mse2model.vec)/(n.samps - n.cells)) * adjuster
+  
+  basic.resids.2.model <- matrix(rep(0, n.controls * length(mse2model.vec)), 
+                                 nrow = n.controls, ncol = length(mse2model.vec))
+  
+  reps <- length(base.expr.vec) * length(diff.2.model.vec)
+  
   # Add synthetic resids one gene at a time:
-  basic.resids.2.model = matrix( rep(0, n.controls*length(mse2model.vec)), nrow = n.controls, ncol=length(mse2model.vec))
-  for( j in 1:length(mse2model.vec)) {
-    basic.resids.2.model[ , j ] = rnorm( n.controls, 0, sd.2.model[j])     # New column of resids
+  basic.resids.2.model <- matrix(rep(0, n.controls * length(mse2model.vec)), 
+                                 nrow = n.controls, ncol = length(mse2model.vec))
+  
+  for (j in 1:length(mse2model.vec)) {
+    basic.resids.2.model[, j] <- rnorm(n.controls, 0, sd.2.model[j])  # New column of resids
   }
-
+  
   # Create zero matrix:
-  num.genes.desired  = length(base.expr.vec) * length(diff.2.model.vec) * length(mse2model.vec);
-  syn.resids.control = matrix( rep(0, n.controls * num.genes.desired ) , nrow = n.controls, ncol = num.genes.desired );
-  add2 = 0;
-  for( i in 1:length( mse2model.vec ) ) {
-    for( j in 1:reps) {
-      syn.resids.control[ , j + add2 ] = basic.resids.2.model[ , i ];
+  num.genes.desired <- length(base.expr.vec) * length(diff.2.model.vec) * length(mse2model.vec)
+  
+  syn.resids.control <- matrix(rep(0, n.controls * num.genes.desired), 
+                               nrow = n.controls, ncol = num.genes.desired)
+  add2 <- 0
+  for (i in 1:length(mse2model.vec)) {
+    for (j in 1:reps) {
+      syn.resids.control[, j + add2] <- basic.resids.2.model[, i]
     }
-    add2 = add2 + reps;
+    add2 <- add2 + reps
   }
-
+  
   # Stack for identical resids on cases and controls:
-  syn.resids = rbind( syn.resids.control, syn.resids.control )
-  return( syn.resids )
+  syn.resids <- rbind(syn.resids.control, syn.resids.control)
+  return(syn.resids)
 }
