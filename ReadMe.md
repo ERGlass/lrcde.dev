@@ -41,5 +41,6 @@ The "[LRCDE Permutations for AUC Variability](vignettes/lrcde.permutations_for_a
 
 ## Internal functions
 
+- `do.dual.decon` - a function to actually perform two-group cell type-specific differential expression analysis. Used by the main `lrcde` function
 - `cell.props.target` - a function to simulate cell proportion matrix with pre-defined cell proportion standard deviation for the target cell type, and the condition number for the whole matrix
 - `custom.resid.synthetic` - a function to create a matrix of simulated residuals for each sample and cell type
