@@ -22,68 +22,69 @@
 #' }
 #' 
 cell.props.target <- function(n.cells = 3, n.samps = 15, target.sd = 0.08, target.cd = 50000) {
-  #######################################################################
   # Create 1st cell with desired SD:
-  start.prop    = 0.01
-  tol = 0.001
-  end.prop = 0.001
-  tot.len = n.samps
-  #########################    
-  while(TRUE){
-    cell.1 = seq( start.prop, end.prop, length.out = tot.len )
-    sd.1 = sd(cell.1)
-    diff = target.sd - sd.1
-    #     cat("diff: ", diff, ", tol: ", tol)
-    if( abs(diff) <= tol ) break;
-    if( diff > 0 ) {
-      end.prop = end.prop + 0.0001    # increase target sd
+  start.prop <- 0.01
+  tol        <- 0.001
+  end.prop   <- 0.001
+  tot.len    <- n.samps
+
+  while (TRUE) {
+    cell.1 <- seq(start.prop, end.prop, length.out = tot.len)
+    sd.1   <- sd(cell.1)
+    diff   <- target.sd - sd.1
+    # cat('diff: ', diff, ', tol: ', tol)
+    if (abs(diff) <= tol) 
+      break
+    if (diff > 0) {
+      end.prop <- end.prop + 0.0001  # increase target sd
     } else {
-      end.prop = end.prop - 0.0011    # decrease target sd
-    } # if diff ...
-  } # while
-  #######################################################################
-  
-  # Make more cells with noise:  
-  tot.rem = 1 - cell.1
-  n.cells.minus.1 = ( n.cells - 1 )
+      end.prop <- end.prop - 0.0011  # decrease target sd
+    }  # if diff ...
+  }  # while
+
+  # Make more cells with noise:
+  tot.rem         <- 1 - cell.1
+  n.cells.minus.1 <- (n.cells - 1)
   # per.cell = tot.rem / n.cells.minus.1
   
   # New cells:
-  scale.tune = 0.2
-  cd.diff = 100000 # Start with arbitrarily huge difference
-  cd.tol = 0.01 * target.cd
+  scale.tune <- 0.2
+  cd.diff    <- 100000  # Start with arbitrarily huge difference
+  cd.tol     <- 0.01 * target.cd
   
-  while( TRUE ){ # Target a condtion number for whole matrix:
-    
-    if(cd.diff > 0){ # If tmp kappa is too small, decrease SD of remaining cells:
-      scale.tune = scale.tune * .9999
-    } else {          # Else, if tmp kappa is too big, increase SD of remaining cells:
-      scale.tune = scale.tune * 1.001
+  # Target a condtion number for whole matrix:
+  while (TRUE) {
+    if (cd.diff > 0) {
+      # If tmp kappa is too small, decrease SD of remaining cells:
+      scale.tune <- scale.tune * 0.9999
+    } else {
+      # Else, if tmp kappa is too big, increase SD of remaining cells:
+      scale.tune <- scale.tune * 1.001
     }
     
-    more.cells = matrix(ncol=n.cells.minus.1, nrow=n.samps)
-    more.cells[,1] = cell.1
-    for(r in 2:(n.cells.minus.1)) {
-      more.cells[,r] = runif( n.samps , 0 , tot.rem * scale.tune )
-      tot.rem = 1 - apply( more.cells[,1:r], 1, sum )
+    more.cells        <- matrix(ncol = n.cells.minus.1, nrow = n.samps)
+    more.cells[, 1]   <- cell.1
+    
+    for (r in 2:(n.cells.minus.1)) {
+      more.cells[, r] <- runif(n.samps, 0, tot.rem * scale.tune)
+      tot.rem         <- 1 - apply(more.cells[, 1:r], 1, sum)
     }
     
     # Create LAST cell:
-    sum.mor = apply( more.cells, 1, sum )
-    last.cell = 1-sum.mor             # This forces VIF to Inf (row sums to 1)
-    cell.props.tmp = cbind( more.cells, last.cell )
+    sum.mor        <- apply(more.cells, 1, sum)
+    last.cell      <- 1 - sum.mor  # This forces VIF to Inf (row sums to 1)
+    cell.props.tmp <- cbind(more.cells, last.cell)
     
     # Get condition number and diff from target condtion number:
-    cc.cc = t( cell.props.tmp ) %*% cell.props.tmp
-    cd.tmp = kappa( cc.cc, exact=TRUE )
-    cd.diff = target.cd - cd.tmp
+    cc.cc   <- t(cell.props.tmp) %*% cell.props.tmp
+    cd.tmp  <- kappa(cc.cc, exact = TRUE)
+    cd.diff <- target.cd - cd.tmp
     
-    # cat("tmp kappa: ", cd.tmp, ", diff: ", cd.diff, "\n")  
-    if ( abs(cd.diff) < cd.tol ) break;
-  } # While
-  colnames( cell.props.tmp ) = NULL  
-#######################################################################
-#######################################################################
-return( cell.props.tmp )
-} # End cell.props.target
+    # cat('tmp kappa: ', cd.tmp, ', diff: ', cd.diff, '\n')
+    if (abs(cd.diff) < cd.tol) 
+      break
+  }  # While
 
+  colnames(cell.props.tmp) <- NULL
+  return(cell.props.tmp)
+}  # End cell.props.target
