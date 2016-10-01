@@ -2,36 +2,45 @@
 % Please edit documentation in R/do.dual.decon.R
 \name{do.dual.decon}
 \alias{do.dual.decon}
-\title{do.dual.decon}
+\title{do.dual.decon - internal}
 \usage{
-do.dual.decon(het.sub, cell.props, groups, medCntr, stdz, nonNeg)
+do.dual.decon(het.sub, cell.props, groups, medCntr = FALSE, stdz = FALSE,
+  nonNeg = TRUE)
 }
 \arguments{
-\item{het.sub}{The samples by genomic measures het.suberogeneous observations matrix}
+\item{het.sub}{the samples (rows) by genes (columns) heterogeneous gene expression matrix.
+Should contain non-median-centered, non-standardized, positive values. log2-transformation recommended. Required}
 
-\item{cell.props}{Should be samples by cell types (rows by columns).  The relative cell proportions per sample.}
+\item{cell.props}{the cell proportion matrix, cell types (rows) by samples (columns). 
+The proportion should be relative, e.g., sum up to ~1 per sample. Required}
 
-\item{groups}{Vector of 1's and 2's indicating group membership (controls and cases).}
+\item{groups}{a vector of 1's and 2's indicating group assignment. 
+Should correspond to the sample order in het.sub and cell.props. Required}
 
-\item{medCntr}{Boolean indicatinng whether to median center difference estimates.}
+\item{medCntr}{boolean indicatinng whether to median center difference estimates. Default - FALSE}
 
-\item{stdz}{Boolean indicating whetehr to standardize difference estimates.}
+\item{stdz}{boolean indicating whether to standardize difference estimates. Default - FALSE}
 
-\item{nonNeg}{Boolean indicating whet.subher to force cell type-specific expression estiamtes to be non-negative.}
+\item{nonNeg}{boolean indicating whether to force cell type-specific expression estimates to be non-negative. Default - TRUE}
 }
 \value{
-Returns a list containing group-wise difference estimates, regression residuals, lm objects per group, and standard errors of cell type-specific expression estimates.  Also returns a two item list containing results of Breusch-Pagan test.
+Returns a list containing group-wise difference estimates, regression residuals, lm objects per group, 
+and standard errors of cell type-specific expression estimates.  
+Also returns a two item list containing results of Breusch-Pagan test.
 }
 \description{
-Performs the core functionality of LRCDE.  This function does the actual linear regression deconvolution per group.
+Performs the core functionality of LRCDE - cell type-specific differential expression detection.
+This function does the actual linear regression deconvolution per group.
 }
 \details{
 Here is where the actual group-wise linear regressions are performed.
-This function is designed to handle a single genomic site at a time; e.g.: a single vector containing het.suberogeneous observations for controls and cases.
-This is the core functionality of linear regression cell type-specific differential expression detection.
+This function is designed to handle a single genomic site at a time; 
+e.g.: a single vector containing het.suberogeneous observations for controls and cases.
 }
 \examples{
-do.dual.decon( het.sub.obs, cell.props, groups, medCntr, stdz, nonNeg  )
+\dontrun{
+do.dual.decon(het.sub.obs, cell.props, groups, medCntr = FALSE, stdz = FALSE, nonNeg =TRUE)
+}
 }
 \author{
 Edmund R Glass, \email{Edmund.Glass@gmail.com}

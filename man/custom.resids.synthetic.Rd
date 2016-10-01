@@ -2,30 +2,40 @@
 % Please edit documentation in R/custom.resids.synthetic.R
 \name{custom.resids.synthetic}
 \alias{custom.resids.synthetic}
-\title{custom.resids.synthetic}
+\title{custom.resids.synthetic - internal}
 \usage{
-custom.resids.synthetic(mse2model.vec, groups, diff.2.model.vec, base.expr.vec,
-  adjuster = 1, n.cells)
+custom.resids.synthetic(mse2model.vec = 0.05, groups,
+  diff.2.model.vec = c(0.1, 0.5, 1), base.expr.vec = 10, adjuster = 1,
+  n.cells)
 }
 \arguments{
-\item{mse2model.vec}{The vector of mean squared errors (MSEs) to model}
+\item{mse2model.vec}{the vector of mean squared errors (MSEs) to model. Default - 0.05}
 
-\item{groups}{A vector of 1's and 2's indicating group membership per sample.  Should align with samples in het.sub and cell.props.}
+\item{groups}{A vector of 1's and 2's indicating group membership per sample. 
+Should align with the order of samples in het.sub and cell.props matrices. Required.}
 
-\item{diff.2.model.vec}{Vector of cell type-specific differential expressions to create.}
+\item{diff.2.model.vec}{vector of cell type-specific differential expressions to create.
+Devault - c(0.1, 0.5, 1)}
 
-\item{base.expr.vec}{Vector of base (control group) cell type specific expressions to model}
+\item{base.expr.vec}{vector of base (control group) cell type specific expressions to model.
+Default - 10}
 
-\item{adjuster}{A scaling factor used on the resulting standard deviation of residuals.}
+\item{adjuster}{a scaling factor used on the resulting standard deviation of residuals. Default - 1}
+
+\item{n.cells}{number of cell types. Required}
 }
 \value{
-syn.resids  Synthetic normal residuals based on standard deviations of control and cases residuals from resids.gene.j.
+a matrix of synthetic normal residuals based on standard deviations of control 
+and cases residuals from resids.gene.j. `length(group)` rows X `n.cells` columns
 }
 \description{
-Called from user lrcde wrapper script (see example 'lrcde.wrapper.sims.R').
+Used in 'lrcde.permutations_for_auc_variability' and 'using_lrcde'
 }
 \examples{
-custom.resids.synthetic( mse2model.vec, groups, diff.2.model.vec, base.expr.vec, adjuster=1  )
+\dontrun{
+resids <- custom.resids.synthetic(mse2model.vec = c(0.05), groups = c(rep(1, 15), rep(2, 15)), 
+                                  diff.2.model.vec = c(0.1, 0.5, 1), base.expr.vec = 10, adjuster = 1, n.cells = 3)
+}                                   
 }
 \author{
 Edmund R Glass, \email{Edmund.Glass@gmail.com}
