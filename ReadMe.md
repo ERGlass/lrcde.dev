@@ -38,3 +38,7 @@ The "[LRCDE Permutations for AUC Variability](vignettes/lrcde.permutations_for_a
 
 - `lrcde` - main function to perform cell type-specific differential expression analysis.
 - `decon.cell.props` - a function to estimate cell proportions given heterogeneous gene expression matrix and cell type-specific gene expression signatures.
+
+## Internal functions
+
+- `cell.props.target` - a function to simulate cell proportion matrix with pre-defined cell proportion standard deviation for the target cell type, and the condition number for the whole matrix
