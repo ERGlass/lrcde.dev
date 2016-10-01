@@ -29,6 +29,7 @@ results.frame = lrcde( het.matrix, cell.props, groups )
 
 - "[Using LRCDE](vignettes/using_lrcde.Rmd)" - how to run a quick simulation
 - "[GEO65391_deconvolve_proportions](vignettes/GEO65391_deconvolve_proportions.Rmd)" - how to estimate cell proportions from cell signatures
+- "[random_data_simulation_lrcde](vignettes/random_data_simulation_lrcde.Rmd)" - running `lrsde` on completely random data
 
 The "[LRCDE Permutations for AUC Variability](vignettes/lrcde.permutations_for_auc_variability.Rmd)" is a more elaborate demonstration.  Caution: The permutations will take about 20 minutes or so to run. This is the code which demonstrates AUROC variability when condition number (kappa) of the cell proportions predictor matrix is very high. The plotting facility in the permutations vignette depends upon the package `Hmisc`.
 
