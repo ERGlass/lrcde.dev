@@ -1,7 +1,7 @@
 
 ---
 title: "Deconvolve cell proportions"
-author: "Edmund R Glass"
+author: "Edmund R. Glass, Mikhail G. Dozmorov"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
