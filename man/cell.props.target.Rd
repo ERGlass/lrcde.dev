@@ -4,28 +4,35 @@
 \alias{cell.props.target}
 \title{cell.props.target}
 \usage{
-cell.props.target(n.cells, n.samps, target.sd, target.cd)
+cell.props.target(n.cells = 3, n.samps = 15, target.sd = 0.08,
+  target.cd = 50000)
 }
 \arguments{
-\item{n.cells}{Total number of cell types to simulate.}
+\item{n.cells}{total number of cell types to simulate. Default - 3.}
 
-\item{n.samps}{Sample size for cell proportions matrix to create.}
+\item{n.samps}{sample size for cell proportions matrix to create. Default - 15.}
 
-\item{target.sd}{Standard deviation to create across samples for cell of interest.}
+\item{target.sd}{standard deviation of the proportions of the target cell type. Default - 0.08.}
 
-\item{target.cd}{Condition number for whole cell proportions matrix.}
+\item{target.cd}{condition number for the whole cell proportions matrix. Default - 50000}
 }
 \value{
 cell.props An n.samps by cell types matrix of simulated relative cell proportions.
 }
 \description{
-Creates synthetic cell proportions which targets both a specific cell proportion standard deviation for cell 1 (the cell used for simulation purposes) and condition number over entire cell proportion matrix.
+Creates simulated cell proportions with pre-specified parameters for the target cell type.
+The target cell type with known parameters of the corresponding proportions is then used
+for further simulations. The target cell type is the first column in the cell proportion matrix.
+The standard deviation for the target cell type may be specified, 
+as well as the condition number over entire cell proportion matrix.
 }
-\details{
-NOTE: DO not attempt to specify a condition number less than 15.  Function will crash.
+\note{
+NOTE: do NOT specify a condition number less than 15. The function will crash.
 }
 \examples{
-cell.props.target( n.cells,  n.samps, target.sd, target.cd )
+\dontrun{
+cell.props <- cell.props.target(n.cells = 3,  n.samps = 15, target.sd = 0.08, target.cd = 50000)
+}
 
 }
 \author{
