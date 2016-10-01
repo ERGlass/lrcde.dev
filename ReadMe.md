@@ -1,3 +1,11 @@
+LRCDE package performs cell type-specific differential expression analysis provided three components:
+
+1. `het.matrix` - A heterogeneous matrix of genomic measures, sample by gene (rows by columns).
+2. `cell.props` - A matrix of measured relative cell proportions, sample by cell type. It can be estimated using cell signatures using the `decon.cell.props` function
+3. `group` - A group membership vector (1's and 2's) indicating controls and cases.
+
+LRCDE functionality applies to any type of high-throughput data other than gene expression. E.g., methylation profiles (M-values recommended), RNA-seq data (FPKM or TPM values recommended).
+
 ## Getting started with the LRCDE package
 
 Install the LRCDE package from GitHub.
@@ -5,13 +13,6 @@ Install the LRCDE package from GitHub.
 ```{r}
 devtools::install_github("ERGlass/lrcde.dev", build_vignettes=TRUE)
 ```
-
-LRCDE package performs cell type-specific differential expression analysis provided three components:
-
-1. `het.matrix` - A heterogeneous matrix of genomic measures, sample by gene (rows by columns).
-2. `cell.props` - A matrix of measured relative cell proportions, sample by cell type. It can be estimated using cell signatures using the `decon.cell.props` function
-3. `group` - A group membership vector (1's and 2's) indicating controls and cases.
-
 See `?lrcde` for real life examples. Run the simulation example in the "[Using LRCDE](vignettes/using_lrcde.Rmd)" vignette.
 
 ```{r}
