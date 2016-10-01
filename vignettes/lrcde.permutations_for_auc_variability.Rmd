@@ -1,6 +1,6 @@
 ---
 title: "LRCDE permutations for AUC variability"
-author: "Edmund R Glass"
+author: "Edmund R. Glass, Mikhail G. Dozmorov"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -9,9 +9,9 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-The lrcde.permutations function uses the same linear regression deconvolution step as lrcde.  It does permutations of the group membership labels in order to estimate the null distribution of no differential expression per genomic site per cell type.  This allows computation of empirical permuted p-values per feature per cell type.
+The `lrcde.permutations` function uses the same linear regression deconvolution step as the `lrcde` function.  It does permutations of the group membership (samples) labels in order to estimate the null distribution of no differential expression per genomic site per cell type.  This allows computation of empirical permuted p-values per feature per cell type.
 
-The resulting permuted p-values from the simulated target cell type are then used to calcuate area under the receiver operator characteristic curve (AUROC).  The pROC package is used for this calculation.  The permuted p-values and a "truth" indicator vector of zeros and 1's is used which flags the known differentiated sites in the target cell.
+The resulting permuted p-values from the introduced known difference in the target cell type are then used to calcuate area under the receiver operator characteristic curve (AUROC).  The `pROC` package is used for this calculation.  The permuted p-values and a "truth" indicator vector of zeros and 1's is used which flags the known differentiated sites in the target cell.
 
 The following steps allow for use of the simulation facilities and subsequent use of the the lrcde.permutations function.
 
@@ -26,318 +26,259 @@ library(lrcde) # Load the lrcde package
 
 # Hmisc will be used to plot the mean AUROCs and confidence intervals:
 library(Hmisc)
-
 ```
 
 ## Parameters for permutations:
 
-Decalare the total "genes" to model: 'n.genes'.  The first half of these genes will be differentially expressed between controls and cases.  The second half will not:
+Decalare the total number of genes to model, `n.genes`.  The first half of these genes will have introduced gene expression differences between controls and cases.  The second half will be unchanged:
+
 ```{r, eval=FALSE, results="hide"}
-  n.genes = 200
-  
-  # Total number of group label permutations to perform:
-  n.perms = 100
+n.genes = 200
+
+# Total number of group label permutations to perform:
+n.perms = 100
 ```  
   
 Declare the total number of repeated iterations of the same simulation with same cell proportion parameters.
 This allows for the random number generation seed to "float" or change between iterations.
-In this way, a cell proportions matrix with the same standard deviation (SD) on the target cell and the same condition number (kappa) on the cell proportions per group is created for each iteration, yet the actual cell proportions numbers are slightly different (perturbed) between iterations.
-It is this small change in cell proportion numbers which results in fluctuations of realized AUROC between iterations.  This type of variability is worse when the cell proprtions matrix is "ill-conditioned" (has a very high condtion number: above 1000.).
+In this way, a cell proportions matrix with the same standard deviation (SD) on the target cell and the same condition number (kappa) on the cell proportions per group is created for each iteration, yet the actual cell proportions numbers will be slightly different (perturbed) between iterations.
+It is this small change in cell proportion numbers which results in fluctuations of the resulting AUROC between iterations.  This type of variability is worse when the cell proprtions matrix is "ill-conditioned" (has a very high condtion number: above 1000.).
+
 ```{r, eval=FALSE, results="hide"}
-  total.sims = 100
+total.sims = 100
 ```
 
 Declaration of simulation parameters then proceeds in the usual way:
+
 ```{r, eval=FALSE, results="hide"}
-n.samps = 10 # Sample size per group
+n.samps         <- 10      # Sample size per group
 
-# Mean Squared Error to model
-mse2model.vec  = c( 2.5 )
+mse2model.vec   <- c(2.5)  # Mean Squared Error to model
 
-# Cell proportion parameterss to model:
-cell.sd.2.model = c( 0.04 )
+cell.sd.2.model <- c(0.04) # Cell proportion parameterss to model:
 
 # Condition numbers (kappa) to target (resulting kappa will approx):
 # DO NOT change these values since this is a demonstration script,
 # They are hard coded in the final analysis section to
 # produce matching data frames:
-kappa.2.model.vec  = c(200, 1000, 2000, 3000, 4000
-                       , 5000, 10000, 50000, 100000 )
+kappa.2.model.vec <- c(200, 1000, 2000, 3000, 4000, 5000, 10000, 50000, 100000)
 ```
 
-## Now Perform Permutations
-A 'for' loop contains the rest of the simulation and analysis.  Each of the kappa values will be iterated over 'total.sims' times.  Each iteration will have n.perms permuations performed in order to obtain p-values and a single AUROC.  This will result in 'total.sims' AUROCs per kappa.  The resulting AUROCs from a single kappa will be saved in its own data frame.  Following the loop of iterations, the resulting dataframes of AUROCs will be used to produce plots of average AUROCs with error bars indicated.
+Now Perform Permutations
+
+A 'for' loop contains the rest of the simulation and analysis.  Each of the kappa values will be iterated over the `total.sims` times.  Each iteration will have the `n.perms` permuations performed in order to obtain p-values and a single AUROC.  This will result in the `total.sims` AUROCs per kappa.  The resulting AUROCs from a single kappa will be saved in its own data frame.  Following the loop of iterations, the resulting dataframes of AUROCs will be used to produce plots of average AUROCs with error bars indicated.
+
 ```{r, eval=FALSE, results="hide"}
 # Loop over all of the targeted kappas:
-for( kappa.2.model in kappa.2.model.vec) {
+for (kappa.2.model in kappa.2.model.vec) {
 
-  # Number of cells to simulate:
-  n.cells  = c( 5 )
-  # The "target" cell (the one with the fold change) for simulations
-  cell.p = 1
+  n.cells       <- c(5)  # Number of cell types to simulate:
+  cell.p        <- 1     # The "target" cell (the one with the fold change) for simulations
   
   # Cell expression params to model:
-    # Base level cell expressions to model:
-    base.expr    = c( 2  )
-    # Cell level differential expression to model:
-    diff.2.model = c( 0.1 )
+  base.expr    <- c(2)   # Base level cell expressions to model:
+  diff.2.model <- c(0.1) # Cell level differential expression to model:
 
-###############################################################################
-# Simulate data:
-seed2set = (11221963)
+  # Simulate data:
+  seed2set     <- (11221963)
+  groups       <- c(rep(1, n.samps), rep(2, n.samps)) # Group indicator vector (group membership indicator):
 
-# Group indicator vector (group membership indicator):
-groups = c(rep(1,n.samps), rep(2,n.samps) )
+  # Customized cell expression for use in getting AUROC (and buiding ROC curves):
+  sim.cell.expr.perms <- function(n.cells, base.expr, diff.2.model, cell.p, n.genes) {
+      cells.cntl <- matrix(rep(base.expr, n.cells * n.genes), nrow = n.cells)
+      cells.case <- cells.cntl
+      haf.genes  <- n.genes/2
+      cells.case[cell.p, 1:haf.genes] = cells.case[cell.p, 1:haf.genes] + diff.2.model
+      cells.expr <- rbind(cells.cntl, cells.case)
+      return(cells.expr)
+  }
 
-###############################################################################
-# Customized cell expression for use in getting AUROC (and buiding ROC curves):
-sim.cell.expr.perms = function( n.cells
-                                , base.expr
-                                , diff.2.model
-                                , cell.p
-                                , n.genes ){
-  cells.cntl = matrix( rep(base.expr, n.cells*n.genes), nrow=n.cells )
-  cells.case = cells.cntl
-  haf.genes = n.genes / 2
-  cells.case[cell.p,1:haf.genes]=cells.case[cell.p,1:haf.genes]+diff.2.model
-  cells.expr = rbind(cells.cntl, cells.case)
-  return( cells.expr )
-}
+cell.expr   <- sim.cell.expr.perms(n.cells, base.expr, diff.2.model, cell.p, n.genes)
+haf.genes   <- n.genes / 2
+truth       <- c(rep(1, haf.genes), rep(0, haf.genes))
 
-cell.expr=sim.cell.expr.perms(n.cells,base.expr,diff.2.model,cell.p,n.genes )
-haf.genes = n.genes / 2
-truth = c(  rep(1, haf.genes), rep(0, haf.genes)    )
-###############################################################################
-
-###############################################################################
+method2use  <- "dual"
+lrcde.output.file <- paste0("dummy.csv")
+alternative <- "two.sided"  # One of 'two.sided', 'greater', or 'less'
 # Use these for LRCDE since power calculation is meaningless if
 # differences are transformed but standard errors are not:
-stdz=FALSE; medCntr=FALSE; nonNeg=TRUE
-###############################################################################
+stdz = FALSE; medCntr = FALSE; nonNeg = TRUE
 
-###############################################################################
-# Run lrcde on each "gene":
-method2use="dual"
+# Permutations: NOTE: We want the same cell proportion parameters (kappa and SD) each time...  but allow seed to float around.
+set.seed(seed2set)  # Only do this once.
 
-lrcde.output.file   = paste0( "dummy.csv"  )
+auroc.frame <- data.frame()
 
-alternative='two.sided' # One of "two.sided", "greater", or "less"
-
-###############################################################################
-# Permutations:
-# NOTE: We want the same cell proportion parameters (kappa and SD) each time...
-# but allow seed to float around.
-set.seed(seed2set) # Only do this once.
-
-auroc.frame = data.frame()
-
-for( sim in 1:total.sims ) {
-
-  cat(" Iteration: ", sim , "\n"    )
+for(sim in 1:total.sims) {
+  cat(" Iteration: ", sim, "\n")
   
   # Loop for permutations.
   # Use same data over and over but keep changing cell proportions:
   # set.seed(seed2set)
-  cell.props.1 = cell.props.target( n.cells
-                                    , n.samps
-                                    , cell.sd.2.model
-                                    , kappa.2.model )
+  cell.props.1 <- cell.props.target(n.cells, n.samps, cell.sd.2.model, kappa.2.model)
   
   # Stack control and cases (identical) cell proportions:    
-  cell.props = rbind( cell.props.1, cell.props.1 )
+  cell.props   <- rbind(cell.props.1, cell.props.1)
 
   # Only looping for permutations:
-  resids = matrix( , ncol=n.genes, nrow=2*n.samps)
+  resids       <- matrix(, ncol = n.genes, nrow = 2 * n.samps)
   
-  for( p in 1:n.genes) {
-    
-    
-    resids[, p ] = custom.resids.synthetic(  mse2model.vec
-                                             , groups
-                                             , diff.2.model
-                                             , base.expr
-                            # 'adjuster' is a scaling factor for target MSE
-                                             , adjuster=1 )
+  for (p in 1:n.genes) {
+    resids[, p] <- custom.resids.synthetic(mse2model.vec, groups, diff.2.model, base.expr, adjuster = 1, n.cells = n.cells) # 'adjuster' is a scaling factor for target MSE
   }
   
   # Sim het obs:
-  het.sub = het.from.synthetic(  cell.props
-                                 , cell.expr
-                                 , resids
-                                 , groups )
+  het.sub       <- het.from.synthetic(cell.props, cell.expr, resids, groups)
   
   # Run LRCDE:
-  return.list.perms = lrcde.permutations(  het.sub, cell.props, groups
-                                          , medCntr=medCntr
-                                          , stdz=stdz
-                                          , nonNeg=nonNeg
-                                          , method    = method2use
-                                          , direction = alternative
-                                          , n.perms
-                                          , cell.p
-                                          , truth
-  )
+  return.list.perms <- lrcde.permutations(het.sub, cell.props, groups, medCntr=medCntr, stdz = stdz, nonNeg = nonNeg, method = method2use, direction = alternative, n.perms, cell.p, truth)
   
   # return.list = list( p.perms , auroc, kappa.control )
-  auroc         = return.list.perms[[2]]
-  kappa.actual  = return.list.perms[[3]]
+  auroc             <- return.list.perms[[2]]
+  kappa.actual      <- return.list.perms[[3]]
   
   # Store auroc and kappa:
-  new.row = c(auroc, kappa.actual)
-  auroc.frame = rbind(auroc.frame, new.row)
+  new.row           <- c(auroc, kappa.actual)
+  auroc.frame       <- rbind(auroc.frame, new.row)
   
 } # End totol.sims
 ###############################################################################
-names(auroc.frame) = c("auroc", "kappa")
+names(auroc.frame)  <- c("auroc", "kappa")
 
-if (kappa.2.model == 200)    auroc.frame.200  = auroc.frame
-if (kappa.2.model == 1000)   auroc.frame.1k   = auroc.frame
-if (kappa.2.model == 2000)   auroc.frame.2k   = auroc.frame
-if (kappa.2.model == 3000)   auroc.frame.3k   = auroc.frame
-if (kappa.2.model == 4000)   auroc.frame.4k   = auroc.frame
-if (kappa.2.model == 5000)   auroc.frame.5k   = auroc.frame
-if (kappa.2.model == 10000)  auroc.frame.10k  = auroc.frame
-if (kappa.2.model == 50000)  auroc.frame.50k  = auroc.frame
-if (kappa.2.model == 100000) auroc.frame.100k = auroc.frame
+if (kappa.2.model == 200)    auroc.frame.200  <- auroc.frame
+if (kappa.2.model == 1000)   auroc.frame.1k   <- auroc.frame
+if (kappa.2.model == 2000)   auroc.frame.2k   <- auroc.frame
+if (kappa.2.model == 3000)   auroc.frame.3k   <- auroc.frame
+if (kappa.2.model == 4000)   auroc.frame.4k   <- auroc.frame
+if (kappa.2.model == 5000)   auroc.frame.5k   <- auroc.frame
+if (kappa.2.model == 10000)  auroc.frame.10k  <- auroc.frame
+if (kappa.2.model == 50000)  auroc.frame.50k  <- auroc.frame
+if (kappa.2.model == 100000) auroc.frame.100k <- auroc.frame
 
 } # End big kappa loop
 ```
 
 ## After Permutations... Create Plot of AUROC Confidence Intervals
+
 Now that the iterations have been performed, we have a distribution of AUROCs for each value of kappa.
 
 We will plot the mean AUROC per kappa along with the resulting observed confidence intervals for each kappa.
 For subsequent plotting, we only need calculate the mean AUROC.  The 'upper' and 'lower' for each kappa are there for demonstration purposes and a sanity check.
-```{r, eval=FALSE, results="hide"}
-sd.auroc.200 = sd( auroc.frame.200$auroc )
-mean.auroc.200 = mean( auroc.frame.200$auroc )
-d.f = total.sims - 1
-upper.t.stat = qt( 0.975, d.f)
-upper.ci = upper.t.stat * ( sd.auroc.200 / sqrt( total.sims ) )
-lower.200 = mean.auroc.200-upper.ci;
-upper.200 = mean.auroc.200+upper.ci
-###############################################################################
-sd.auroc.1k = sd( auroc.frame.1k$auroc )
-mean.auroc.1k = mean( auroc.frame.1k$auroc )
-d.f = total.sims - 1
-upper.t.stat = qt( 0.975, d.f)
-upper.ci = upper.t.stat * ( sd.auroc.1k / sqrt( total.sims ) )
-lower.1k = mean.auroc.1k - upper.ci;
-upper.1k = mean.auroc.1k + upper.ci
-###############################################################################
-sd.auroc.2k = sd( auroc.frame.2k$auroc )
-mean.auroc.2k = mean( auroc.frame.2k$auroc )
-d.f = total.sims - 1
-upper.t.stat = qt( 0.975, d.f)
-upper.ci = upper.t.stat * ( sd.auroc.2k / sqrt( total.sims ) )
-lower.2k = mean.auroc.2k - upper.ci;
-upper.2k = mean.auroc.2k + upper.ci
-###############################################################################
-sd.auroc.3k = sd( auroc.frame.3k$auroc )
-mean.auroc.3k = mean( auroc.frame.3k$auroc )
-d.f = total.sims - 1
-upper.t.stat = qt( 0.975, d.f)
-upper.ci = upper.t.stat * ( sd.auroc.3k / sqrt( total.sims ) )
-lower.3k = mean.auroc.3k - upper.ci;
-upper.3k = mean.auroc.3k + upper.ci
-###############################################################################
-sd.auroc.4k = sd( auroc.frame.4k$auroc )
-mean.auroc.4k = mean( auroc.frame.4k$auroc )
-d.f = total.sims - 1
-upper.t.stat = qt( 0.975, d.f)
-upper.ci = upper.t.stat * ( sd.auroc.4k / sqrt( total.sims ) )
-lower.4k = mean.auroc.4k - upper.ci;
-upper.4k = mean.auroc.4k + upper.ci
-###############################################################################
-sd.auroc.5k = sd( auroc.frame.5k$auroc )
-mean.auroc.5k = mean( auroc.frame.5k$auroc )
-d.f = total.sims - 1
-upper.t.stat = qt( 0.975, d.f)
-upper.ci = upper.t.stat * ( sd.auroc.5k / sqrt( total.sims ) )
-lower.5k = mean.auroc.5k - upper.ci;
-upper.5k = mean.auroc.5k + upper.ci
-###############################################################################
-sd.auroc.10k = sd( auroc.frame.10k$auroc )
-mean.auroc.10k = mean( auroc.frame.10k$auroc )
-d.f = total.sims - 1
-upper.t.stat = qt( 0.975, d.f)
-upper.ci = upper.t.stat * ( sd.auroc.10k / sqrt( total.sims ) )
-lower.10k = mean.auroc.10k - upper.ci;
-upper.10k = mean.auroc.10k + upper.ci
-###############################################################################
-sd.auroc.50k = sd( auroc.frame.50k$auroc )
-mean.auroc.50k = mean( auroc.frame.50k$auroc )
-d.f = total.sims - 1
-upper.t.stat = qt( 0.975, d.f)
-upper.ci = upper.t.stat * ( sd.auroc.50k / sqrt( total.sims ) )
-lower.50k = mean.auroc.50k-upper.ci;
-upper.50k = mean.auroc.50k+upper.ci
-###############################################################################
-sd.auroc.100k        =   sd( auroc.frame.100k$auroc )
-mean.auroc.100k = mean( auroc.frame.100k$auroc )
-d.f = total.sims - 1
-upper.t.stat = qt( 0.975, d.f)
-upper.ci = upper.t.stat * ( sd.auroc.100k / sqrt( total.sims ) )
-lower.100k = mean.auroc.100k-upper.ci;
-upper.100k = mean.auroc.100k+upper.ci
-###############################################################################
 
+```{r, eval=FALSE, results="hide"}
+sd.auroc.200    <- sd(auroc.frame.200$auroc)
+mean.auroc.200  <- mean(auroc.frame.200$auroc)
+d.f             <- total.sims - 1
+upper.t.stat    <- qt(0.975, d.f)
+upper.ci        <- upper.t.stat * (sd.auroc.200/sqrt(total.sims))
+lower.200       <- mean.auroc.200 - upper.ci
+upper.200       <- mean.auroc.200 + upper.ci
+############################################################################### 
+sd.auroc.1k     <- sd(auroc.frame.1k$auroc)
+mean.auroc.1k   <- mean(auroc.frame.1k$auroc)
+d.f             <- total.sims - 1
+upper.t.stat    <- qt(0.975, d.f)
+upper.ci        <- upper.t.stat * (sd.auroc.1k/sqrt(total.sims))
+lower.1k        <- mean.auroc.1k - upper.ci
+upper.1k        <- mean.auroc.1k + upper.ci
+############################################################################### 
+sd.auroc.2k     <- sd(auroc.frame.2k$auroc)
+mean.auroc.2k   <- mean(auroc.frame.2k$auroc)
+d.f             <- total.sims - 1
+upper.t.stat    <- qt(0.975, d.f)
+upper.ci        <- upper.t.stat * (sd.auroc.2k/sqrt(total.sims))
+lower.2k        <- mean.auroc.2k - upper.ci
+upper.2k        <- mean.auroc.2k + upper.ci
+############################################################################### 
+sd.auroc.3k     <- sd(auroc.frame.3k$auroc)
+mean.auroc.3k   <- mean(auroc.frame.3k$auroc)
+d.f             <- total.sims - 1
+upper.t.stat    <- qt(0.975, d.f)
+upper.ci        <- upper.t.stat * (sd.auroc.3k/sqrt(total.sims))
+lower.3k        <- mean.auroc.3k - upper.ci
+upper.3k        <- mean.auroc.3k + upper.ci
+############################################################################### 
+sd.auroc.4k     <- sd(auroc.frame.4k$auroc)
+mean.auroc.4k   <- mean(auroc.frame.4k$auroc)
+d.f             <- total.sims - 1
+upper.t.stat    <- qt(0.975, d.f)
+upper.ci        <- upper.t.stat * (sd.auroc.4k/sqrt(total.sims))
+lower.4k        <- mean.auroc.4k - upper.ci
+upper.4k        <- mean.auroc.4k + upper.ci
+############################################################################### 
+sd.auroc.5k     <- sd(auroc.frame.5k$auroc)
+mean.auroc.5k   <- mean(auroc.frame.5k$auroc)
+d.f             <- total.sims - 1
+upper.t.stat    <- qt(0.975, d.f)
+upper.ci        <- upper.t.stat * (sd.auroc.5k/sqrt(total.sims))
+lower.5k        <- mean.auroc.5k - upper.ci
+upper.5k        <- mean.auroc.5k + upper.ci
+############################################################################### 
+sd.auroc.10k    <- sd(auroc.frame.10k$auroc)
+mean.auroc.10k  <- mean(auroc.frame.10k$auroc)
+d.f             <- total.sims - 1
+upper.t.stat    <- qt(0.975, d.f)
+upper.ci        <- upper.t.stat * (sd.auroc.10k/sqrt(total.sims))
+lower.10k       <- mean.auroc.10k - upper.ci
+upper.10k       <- mean.auroc.10k + upper.ci
+############################################################################### 
+sd.auroc.50k    <- sd(auroc.frame.50k$auroc)
+mean.auroc.50k  <- mean(auroc.frame.50k$auroc)
+d.f             <- total.sims - 1
+upper.t.stat    <- qt(0.975, d.f)
+upper.ci        <- upper.t.stat * (sd.auroc.50k/sqrt(total.sims))
+lower.50k       <- mean.auroc.50k - upper.ci
+upper.50k       <- mean.auroc.50k + upper.ci
+############################################################################### 
+sd.auroc.100k   <- sd(auroc.frame.100k$auroc)
+mean.auroc.100k <- mean(auroc.frame.100k$auroc)
+d.f             <- total.sims - 1
+upper.t.stat    <- qt(0.975, d.f)
+upper.ci        <- upper.t.stat * (sd.auroc.100k/sqrt(total.sims))
+lower.100k      <- mean.auroc.100k - upper.ci
+upper.100k      <- mean.auroc.100k + upper.ci
+############################################################################### 
 ```
 
 Now to actually plot the means and confidence intervals of the distribution of AUROCs for each kappa:
+
 ```{r, eval=FALSE, results="hide"}
 # Now plot CIs:
+d.f <- total.sims - 1
+upper.qt <- qt(0.975, d.f)
 
-d.f = total.sims - 1
-upper.qt = qt( 0.975, d.f)
+auc.means <- c(mean.auroc.200, mean.auroc.1k, mean.auroc.2k, mean.auroc.3k, 
+    mean.auroc.4k, mean.auroc.5k, mean.auroc.10k, mean.auroc.50k, mean.auroc.100k)
 
-auc.means = c(    mean.auroc.200
-                , mean.auroc.1k
-                , mean.auroc.2k
-                , mean.auroc.3k
-                , mean.auroc.4k
-                , mean.auroc.5k
-                , mean.auroc.10k
-                , mean.auroc.50k
-                , mean.auroc.100k )
+upper.95 <- c(upper.qt * (sd.auroc.200/sqrt(total.sims)), upper.qt * (sd.auroc.1k/sqrt(total.sims)), 
+    upper.qt * (sd.auroc.2k/sqrt(total.sims)), upper.qt * (sd.auroc.3k/sqrt(total.sims)), 
+    upper.qt * (sd.auroc.4k/sqrt(total.sims)), upper.qt * (sd.auroc.5k/sqrt(total.sims)), 
+    upper.qt * (sd.auroc.10k/sqrt(total.sims)), upper.qt * (sd.auroc.50k/sqrt(total.sims)), 
+    upper.qt * (sd.auroc.100k/sqrt(total.sims)))
 
-upper.95    = c(   upper.qt * (sd.auroc.200  / sqrt( total.sims ))
-                 , upper.qt * (sd.auroc.1k   / sqrt( total.sims ))
-                 , upper.qt * (sd.auroc.2k   / sqrt( total.sims ))
-                 , upper.qt * (sd.auroc.3k   / sqrt( total.sims ))
-                 , upper.qt * (sd.auroc.4k   / sqrt( total.sims ))
-                 , upper.qt * (sd.auroc.5k   / sqrt( total.sims ))
-                 , upper.qt * (sd.auroc.10k  / sqrt( total.sims ))
-                 , upper.qt * (sd.auroc.50k  / sqrt( total.sims ))
-                 , upper.qt * (sd.auroc.100k / sqrt( total.sims ))
-                 )
-
-x = 1:9
+x <- 1:9
 # Assemble results:
-tmp = as.data.frame( cbind( x, auc.means, upper.95))
-colnames(tmp) = c("x", "auc.mean", "upper.95")
+tmp <- as.data.frame(cbind(x, auc.means, upper.95))
+colnames(tmp) <- c("x", "auc.mean", "upper.95")
 
 # Results in 'empty plot':
-plot( tmp$x, tmp$auc.mean, type="n", ylim=c(.698, 0.9 )
-      , xlab="Condition Number", ylab="AUROC", xaxt="n")
+plot(tmp$x, tmp$auc.mean, type = "n", ylim = c(0.698, 0.9), xlab = "Condition Number", ylab = "AUROC", xaxt = "n")
 
 # Visual aid to align kappa with its CI:
-abline( v=c(1:9), lty=2, col="gray")
+abline(v = c(1:9), lty = 2, col = "gray")
 
 # Actually plot the mean AUROCs and error bars:
-with ( data = tmp  , 
-       expr = errbar(x, auc.mean, auc.mean+upper.95, auc.mean-upper.95
-                     , add=T, pch=3, cap=.1) )
+with(data = tmp, expr = errbar(x, auc.mean, auc.mean + upper.95, auc.mean - upper.95, add = T, pch = 3, cap = 0.1))
 
 # Axis labels:
-axis( 1, at=x, las=2, labels=c("200", "1000", "2000", "3000", "4000" 
-                               , "5000" , "10000", "50000", "100000" ))
+axis(1, at = x, las = 2, labels = c("200", "1000", "2000", "3000", "4000", "5000", "10000", "50000", "100000"))
 
 # The 0.8 power threshold:
-abline(.8,0, col="blue", lty=2) # horz line
-###############################################################################
+abline(0.8, 0, col = "blue", lty = 2)  # horz line
+############################################################################### 
 ```
 
 ## Look at resulting plot
+
 Notice the overall decrease in mean AUROC and the widening over confidence intervals with increasing condition number (kappa).  This illustrates the underlying problem with reliance upon cell proportion measures as predictors in a linear model.  Watch out for high condition numbers on the group-wise cell proportions matrices!
 
